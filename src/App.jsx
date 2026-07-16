@@ -22,7 +22,7 @@ function PublicRoute({ children }) {
     );
   }
   if (user) {
-    return <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace />;
+    return <Navigate to={['admin', 'super_admin'].includes(user.role) ? '/admin' : '/dashboard'} replace />;
   }
   return children;
 }

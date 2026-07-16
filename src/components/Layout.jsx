@@ -21,7 +21,11 @@ export default function Layout({ children }) {
     };
     fetchUnread();
     const interval = setInterval(fetchUnread, 30000);
-    return () => clearInterval(interval);
+    window.addEventListener('notifications-updated', fetchUnread);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('notifications-updated', fetchUnread);
+    };
   }, []);
 
   const handleLogout = () => {
@@ -29,7 +33,7 @@ export default function Layout({ children }) {
     navigate('/login');
   };
 
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = ['admin', 'super_admin'].includes(user?.role);
 
   const navItems = isAdmin
     ? [

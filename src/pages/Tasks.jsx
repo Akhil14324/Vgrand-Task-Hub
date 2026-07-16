@@ -3,12 +3,12 @@ import { useAuth } from '../context/AuthContext';
 import { useLocation } from 'react-router-dom';
 import api from '../api/client';
 import Modal from '../components/Modal';
-import { Plus, CheckCircle, Circle, AlertTriangle, Calendar, Filter } from 'lucide-react';
+import { Plus, CheckCircle, Circle, AlertTriangle, Calendar, Filter, Trash2, Pencil } from 'lucide-react';
 
 export default function Tasks() {
   const { user } = useAuth();
   const location = useLocation();
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = ['admin', 'super_admin'].includes(user?.role);
   const isAdminTasks = location.pathname.startsWith('/admin');
 
   const [tasks, setTasks] = useState([]);
@@ -23,9 +23,14 @@ export default function Tasks() {
   const [warnMessage, setWarnMessage] = useState('');
   const [warnError, setWarnError] = useState('');
   const [warning, setWarning] = useState(false);
-  const [form, setForm] = useState({ title: '', description: '', due_date: '', business_id: '' });
+  const [form, setForm] = useState({ title: '', description: '', due_date: '', business_id: '', assigned_user_id: '' });
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [businessUsers, setBusinessUsers] = useState([]);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState(null);
+  const [editForm, setEditForm] = useState({ title: '', description: '', due_date: '' });
+  const [editError, setEditError] = useState('');
 
   const fetchTasks = useCallback(async () => {
     setLoading(true);
@@ -57,14 +62,34 @@ export default function Tasks() {
     fetchBusinesses();
   }, [fetchTasks]);
 
+  const fetchBusinessUsers = async (bizId) => {
+    if (!bizId) {
+      setBusinessUsers([]);
+      return;
+    }
+    try {
+      const res = await api.get('/users');
+      const assigned = (res.data.users || res.users || []).filter(
+        (u) => u.business_id === parseInt(bizId) && u.role === 'user'
+      );
+      setBusinessUsers(assigned);
+    } catch {
+      setBusinessUsers([]);
+    }
+  };
+
   const openCreateModal = () => {
+    const initialBiz = isAdmin ? (filterBusiness || '') : (user?.business_id?.toString() || '');
     setForm({
       title: '',
       description: '',
       due_date: '',
-      business_id: isAdmin ? (filterBusiness || '') : (user?.business_id?.toString() || ''),
+      business_id: initialBiz,
+      assigned_user_id: '',
     });
     setFormError('');
+    setBusinessUsers([]);
+    if (initialBiz) fetchBusinessUsers(initialBiz);
     setCreateModalOpen(true);
   };
 
@@ -86,6 +111,7 @@ export default function Tasks() {
         description: form.description,
         due_date: form.due_date || null,
         business_id: form.business_id ? parseInt(form.business_id) : undefined,
+        assigned_user_id: form.assigned_user_id ? parseInt(form.assigned_user_id) : undefined,
       });
       setCreateModalOpen(false);
       fetchTasks();
@@ -105,11 +131,55 @@ export default function Tasks() {
     }
   };
 
+  const handleDelete = async (taskId) => {
+    if (!confirm('Are you sure you want to delete this task?')) return;
+    try {
+      await api.delete(`/tasks/${taskId}`);
+      fetchTasks();
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to delete task');
+    }
+  };
+
   const openWarnModal = (task) => {
     setWarnTask(task);
     setWarnMessage('');
     setWarnError('');
     setWarnModalOpen(true);
+  };
+
+  const openEditModal = (task) => {
+    setEditingTask(task);
+    setEditForm({
+      title: task.title,
+      description: task.description || '',
+      due_date: task.due_date ? task.due_date.split('T')[0] : '',
+    });
+    setEditError('');
+    setEditModalOpen(true);
+  };
+
+  const handleEdit = async (e) => {
+    e.preventDefault();
+    setEditError('');
+    if (!editForm.title.trim()) {
+      setEditError('Task title is required');
+      return;
+    }
+    setSaving(true);
+    try {
+      await api.put(`/tasks/${editingTask.id}`, {
+        title: editForm.title.trim(),
+        description: editForm.description,
+        due_date: editForm.due_date || null,
+      });
+      setEditModalOpen(false);
+      fetchTasks();
+    } catch (err) {
+      setEditError(err.response?.data?.error || 'Failed to update task');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleWarn = async (e) => {
@@ -224,12 +294,15 @@ export default function Tasks() {
                       {isAdminTasks && task.business_name && (
                         <span className="badge bg-brand-100 text-brand-700">{task.business_name}</span>
                       )}
+                      {isAdminTasks && task.assigned_user_name && (
+                        <span className="badge bg-indigo-100 text-indigo-700">Assigned: {task.assigned_user_name}</span>
+                      )}
                       {task.status === 'completed' ? (
                         <span className="badge bg-green-100 text-green-700">Completed</span>
                       ) : (
                         <span className="badge bg-yellow-100 text-yellow-700">Pending</span>
                       )}
-                      {task.is_warned && (
+                      {task.is_warned && !task.warning_message && (
                         <span className="badge bg-red-100 text-red-700">
                           <AlertTriangle size={12} className="mr-1" />
                           Warned
@@ -242,20 +315,45 @@ export default function Tasks() {
                         </span>
                       )}
                     </div>
+                    {task.is_warned && task.warning_message && (
+                      <div className="mt-2 rounded-md bg-red-50 border-l-4 border-red-500 px-3 py-2.5 shadow-sm">
+                        <p className="text-xs font-semibold text-red-700 flex items-center gap-1.5">
+                          <AlertTriangle size={12} />
+                          Warning
+                        </p>
+                        <p className="text-sm text-red-700 mt-1 leading-relaxed">{task.warning_message}</p>
+                      </div>
+                    )}
                     <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-gray-400">
                       <span>By {task.created_by_name}</span>
                       {task.due_date && <span>Due: {formatDate(task.due_date)}</span>}
                       {task.completed_by_name && <span>Done by {task.completed_by_name}</span>}
                     </div>
-                    {isAdminTasks && task.status === 'pending' && (
+                    <div className="flex items-center gap-3 mt-3">
+                      {isAdminTasks && task.status === 'pending' && (
+                        <button
+                          onClick={() => openWarnModal(task)}
+                          className="text-sm text-red-600 font-medium hover:text-red-700 flex items-center gap-1"
+                        >
+                          <AlertTriangle size={14} />
+                          Send Warning
+                        </button>
+                      )}
                       <button
-                        onClick={() => openWarnModal(task)}
-                        className="mt-3 text-sm text-red-600 font-medium hover:text-red-700 flex items-center gap-1"
+                        onClick={() => openEditModal(task)}
+                        className="text-sm text-blue-600 font-medium hover:text-blue-700 flex items-center gap-1"
                       >
-                        <AlertTriangle size={14} />
-                        Send Warning
+                        <Pencil size={14} />
+                        Edit
                       </button>
-                    )}
+                      <button
+                        onClick={() => handleDelete(task.id)}
+                        className="text-sm text-gray-500 font-medium hover:text-red-600 flex items-center gap-1"
+                      >
+                        <Trash2 size={14} />
+                        Delete
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -270,10 +368,11 @@ export default function Tasks() {
                   <th className="text-left px-4 py-3 text-sm font-medium text-gray-600 w-10"></th>
                   <th className="text-left px-4 py-3 text-sm font-medium text-gray-600">Task</th>
                   {isAdminTasks && <th className="text-left px-4 py-3 text-sm font-medium text-gray-600">Business</th>}
+                  {isAdminTasks && <th className="text-left px-4 py-3 text-sm font-medium text-gray-600">Assigned To</th>}
                   <th className="text-left px-4 py-3 text-sm font-medium text-gray-600">Status</th>
                   <th className="text-left px-4 py-3 text-sm font-medium text-gray-600">Due Date</th>
                   <th className="text-left px-4 py-3 text-sm font-medium text-gray-600">Created By</th>
-                  {isAdminTasks && <th className="text-right px-4 py-3 text-sm font-medium text-gray-600">Actions</th>}
+                  <th className="text-center px-4 py-3 text-sm font-medium text-gray-600 w-32">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -298,14 +397,28 @@ export default function Tasks() {
                       {task.description && (
                         <div className="text-sm text-gray-500 line-clamp-1">{task.description}</div>
                       )}
-                      {task.is_warned && (
+                      {task.is_warned && !task.warning_message && (
                         <span className="badge bg-red-100 text-red-700 mt-1">
                           <AlertTriangle size={12} className="mr-1" />
                           Warned
                         </span>
                       )}
+                      {task.is_warned && task.warning_message && (
+                        <div className="mt-2 rounded-md bg-red-50 border-l-4 border-red-500 px-3 py-2.5 shadow-sm">
+                          <p className="text-xs font-semibold text-red-700 flex items-center gap-1.5">
+                            <AlertTriangle size={12} />
+                            Warning
+                          </p>
+                          <p className="text-sm text-red-700 mt-1 leading-relaxed">{task.warning_message}</p>
+                        </div>
+                      )}
                     </td>
                     {isAdminTasks && <td className="px-4 py-3 text-gray-600">{task.business_name}</td>}
+                    {isAdminTasks && (
+                      <td className="px-4 py-3 text-gray-600">
+                        {task.assigned_user_name || <span className="text-gray-400 italic">All</span>}
+                      </td>
+                    )}
                     <td className="px-4 py-3">
                       {task.status === 'completed' ? (
                         <span className="badge bg-green-100 text-green-700">Completed</span>
@@ -324,19 +437,33 @@ export default function Tasks() {
                       )}
                     </td>
                     <td className="px-4 py-3 text-gray-600">{task.created_by_name}</td>
-                    {isAdminTasks && (
-                      <td className="px-4 py-3 text-right">
-                        {task.status === 'pending' && (
+                    <td className="px-4 py-3">
+                      <div className="flex justify-center gap-2">
+                        {isAdminTasks && task.status === 'pending' && (
                           <button
                             onClick={() => openWarnModal(task)}
-                            className="text-sm text-red-600 font-medium hover:text-red-700 flex items-center gap-1 ml-auto"
+                            className="btn-ghost touch-target text-red-600 hover:text-red-700 hover:bg-red-50"
+                            title="Send Warning"
                           >
-                            <AlertTriangle size={14} />
-                            Warn
+                            <AlertTriangle size={16} />
                           </button>
                         )}
-                      </td>
-                    )}
+                        <button
+                          onClick={() => openEditModal(task)}
+                          className="btn-ghost touch-target text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          title="Edit Task"
+                        >
+                          <Pencil size={16} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(task.id)}
+                          className="btn-ghost touch-target text-gray-500 hover:text-red-600 hover:bg-red-50"
+                          title="Delete Task"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -358,7 +485,11 @@ export default function Tasks() {
               <label className="block text-sm font-medium text-gray-700 mb-1">Business</label>
               <select
                 value={form.business_id}
-                onChange={(e) => setForm({ ...form, business_id: e.target.value })}
+                onChange={(e) => {
+                  const bizId = e.target.value;
+                  setForm({ ...form, business_id: bizId });
+                  fetchBusinessUsers(bizId);
+                }}
                 className="input"
               >
                 <option value="">Select a business...</option>
@@ -366,6 +497,44 @@ export default function Tasks() {
                   <option key={biz.id} value={biz.id}>{biz.name}</option>
                 ))}
               </select>
+            </div>
+          )}
+          {isAdmin && form.business_id && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Assigned Users ({businessUsers.length})
+              </label>
+              {businessUsers.length === 0 ? (
+                <p className="text-sm text-gray-400 italic">No users assigned to this business yet.</p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {businessUsers.map((u) => (
+                    <span key={u.id} className="badge bg-blue-100 text-blue-700">
+                      {u.name}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+          {isAdmin && form.business_id && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Assign to User <span className="text-gray-400 font-normal">(optional)</span>
+              </label>
+              <select
+                value={form.assigned_user_id}
+                onChange={(e) => setForm({ ...form, assigned_user_id: e.target.value })}
+                className="input"
+              >
+                <option value="">All users in business</option>
+                {businessUsers.map((u) => (
+                  <option key={u.id} value={u.id}>{u.name}</option>
+                ))}
+              </select>
+              {form.assigned_user_id && (
+                <p className="text-xs text-gray-500 mt-1">Only the selected user will see this task.</p>
+              )}
             </div>
           )}
           <div>
@@ -436,6 +605,53 @@ export default function Tasks() {
             <button type="submit" disabled={warning} className="btn-danger flex-1">
               <AlertTriangle size={16} className="mr-1" />
               {warning ? 'Sending...' : 'Send Warning'}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Edit Task Modal */}
+      <Modal open={editModalOpen} onClose={() => setEditModalOpen(false)} title="Edit Task">
+        <form onSubmit={handleEdit} className="space-y-4">
+          {editError && (
+            <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+              {editError}
+            </div>
+          )}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+            <input
+              type="text"
+              value={editForm.title}
+              onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+              className="input"
+              placeholder="e.g. Clean the kitchen"
+              autoFocus
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <textarea
+              value={editForm.description}
+              onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+              className="input"
+              rows={3}
+              placeholder="Optional details"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+            <input
+              type="date"
+              value={editForm.due_date}
+              onChange={(e) => setEditForm({ ...editForm, due_date: e.target.value })}
+              className="input"
+            />
+          </div>
+          <div className="flex gap-3 pt-2">
+            <button type="button" onClick={() => setEditModalOpen(false)} className="btn-secondary flex-1">Cancel</button>
+            <button type="submit" disabled={saving} className="btn-primary flex-1">
+              {saving ? 'Saving...' : 'Update Task'}
             </button>
           </div>
         </form>

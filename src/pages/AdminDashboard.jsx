@@ -3,6 +3,16 @@ import { Link } from 'react-router-dom';
 import api from '../api/client';
 import { Building2, CheckCircle, Clock, AlertTriangle, Users, TrendingUp, Plus } from 'lucide-react';
 
+const DEFAULT_TYPE_LABELS = {
+  restaurant: 'Restaurant',
+  hospital: 'Hospital',
+  construction: 'Construction',
+  mines: 'Mines',
+  it: 'IT',
+};
+
+const getTypeLabel = (type) => DEFAULT_TYPE_LABELS[type] || type.replace(/_/g, ' ');
+
 export default function AdminDashboard() {
   const [businesses, setBusinesses] = useState([]);
   const [unassignedCount, setUnassignedCount] = useState(0);
@@ -120,7 +130,7 @@ export default function AdminDashboard() {
                   <div className="flex items-start justify-between mb-3">
                     <div>
                       <h3 className="font-semibold text-gray-900">{biz.name}</h3>
-                      <span className="badge bg-brand-100 text-brand-700 mt-1 capitalize">{biz.type}</span>
+                      <span className="badge bg-brand-100 text-brand-700 mt-1">{getTypeLabel(biz.type)}</span>
                     </div>
                     {parseInt(biz.warned_count) > 0 && (
                       <span className="badge bg-red-100 text-red-700">
@@ -175,7 +185,7 @@ export default function AdminDashboard() {
                         <Link to={`/admin/tasks?business_id=${biz.id}`} className="font-medium text-gray-900 hover:text-brand-600">
                           {biz.name}
                         </Link>
-                        <div className="text-sm text-gray-500 capitalize">{biz.type}</div>
+                        <div className="text-sm text-gray-500">{getTypeLabel(biz.type)}</div>
                       </td>
                       <td className="text-center px-4 py-3 font-medium">{biz.task_count}</td>
                       <td className="text-center px-4 py-3"><span className="text-green-600 font-medium">{biz.completed_count}</span></td>

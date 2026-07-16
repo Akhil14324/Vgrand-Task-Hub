@@ -1,17 +1,21 @@
 import { useEffect, useState, useCallback } from 'react';
 import api from '../api/client';
-import { Bell, AlertTriangle, UserPlus, CheckSquare, CheckCheck } from 'lucide-react';
+import { Bell, AlertTriangle, UserPlus, CheckSquare, CheckCheck, CheckCircle } from 'lucide-react';
 
 const NOTIFICATION_ICONS = {
   warning: { icon: AlertTriangle, color: 'text-red-600', bg: 'bg-red-50' },
   assignment: { icon: UserPlus, color: 'text-brand-600', bg: 'bg-brand-50' },
   task_added: { icon: CheckSquare, color: 'text-green-600', bg: 'bg-green-50' },
+  user_joined: { icon: UserPlus, color: 'text-blue-600', bg: 'bg-blue-50' },
+  task_completed: { icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-50' },
 };
 
 const NOTIFICATION_LABELS = {
   warning: 'Warning',
   assignment: 'Assignment',
   task_added: 'New Task',
+  user_joined: 'New User',
+  task_completed: 'Task Completed',
 };
 
 export default function Notifications() {
@@ -43,6 +47,7 @@ export default function Notifications() {
         prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
       );
       setUnreadCount((prev) => Math.max(0, prev - 1));
+      window.dispatchEvent(new Event('notifications-updated'));
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to mark as read');
     }
@@ -53,6 +58,7 @@ export default function Notifications() {
       await api.put('/notifications/read-all');
       setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
       setUnreadCount(0);
+      window.dispatchEvent(new Event('notifications-updated'));
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to mark all as read');
     }

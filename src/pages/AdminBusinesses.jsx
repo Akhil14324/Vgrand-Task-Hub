@@ -1,26 +1,24 @@
 import { useEffect, useState } from 'react';
 import api from '../api/client';
 import Modal from '../components/Modal';
-import { Plus, Pencil, Trash2, Building2, CheckCircle, Clock, AlertTriangle, Users } from 'lucide-react';
+import { Plus, Pencil, Trash2, Building2 } from 'lucide-react';
 
-const BUSINESS_TYPES = [
+const DEFAULT_TYPES = [
   { value: 'restaurant', label: 'Restaurant' },
   { value: 'hospital', label: 'Hospital' },
   { value: 'construction', label: 'Construction' },
   { value: 'mines', label: 'Mines' },
   { value: 'it', label: 'IT' },
-  { value: 'other', label: 'Other' },
 ];
-
-const TYPE_LABELS = Object.fromEntries(BUSINESS_TYPES.map((t) => [t.value, t.label]));
 
 export default function AdminBusinesses() {
   const [businesses, setBusinesses] = useState([]);
+  const [businessTypes, setBusinessTypes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState({ name: '', type: 'restaurant', description: '' });
+  const [form, setForm] = useState({ name: '', type: 'restaurant', customType: '' });
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -36,20 +34,49 @@ export default function AdminBusinesses() {
     }
   };
 
+  const fetchTypes = async () => {
+    try {
+      const res = await api.get('/businesses/types');
+      setBusinessTypes(res.data.types || []);
+    } catch {
+      setBusinessTypes([]);
+    }
+  };
+
   useEffect(() => {
     fetchBusinesses();
+    fetchTypes();
   }, []);
+
+  const typeOptions = [...new Set([...DEFAULT_TYPES.map((t) => t.value), ...businessTypes])];
+
+  const getTypeLabel = (type) => {
+    const found = DEFAULT_TYPES.find((t) => t.value === type);
+    return found ? found.label : type.replace(/_/g, ' ');
+  };
+
+  const getFinalType = () => {
+    if (form.type === '__custom__') {
+      return form.customType.trim().toLowerCase().replace(/\s+/g, '_');
+    }
+    return form.type;
+  };
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: '', type: 'restaurant', description: '' });
+    setForm({ name: '', type: 'restaurant', customType: '' });
     setFormError('');
     setModalOpen(true);
   };
 
   const openEdit = (biz) => {
     setEditing(biz);
-    setForm({ name: biz.name, type: biz.type, description: biz.description || '' });
+    const isDefault = DEFAULT_TYPES.some((t) => t.value === biz.type);
+    setForm({
+      name: biz.name,
+      type: isDefault ? biz.type : '__custom__',
+      customType: isDefault ? '' : biz.type,
+    });
     setFormError('');
     setModalOpen(true);
   };
@@ -61,15 +88,21 @@ export default function AdminBusinesses() {
       setFormError('Business name is required');
       return;
     }
+    const finalType = getFinalType();
+    if (!finalType) {
+      setFormError('Please enter a new type name');
+      return;
+    }
     setSaving(true);
     try {
       if (editing) {
-        await api.put(`/businesses/${editing.id}`, form);
+        await api.put(`/businesses/${editing.id}`, { name: form.name, type: finalType });
       } else {
-        await api.post('/businesses', form);
+        await api.post('/businesses', { name: form.name, type: finalType });
       }
       setModalOpen(false);
       fetchBusinesses();
+      fetchTypes();
     } catch (err) {
       setFormError(err.response?.data?.error || 'Failed to save business');
     } finally {
@@ -126,7 +159,7 @@ export default function AdminBusinesses() {
                 <div className="flex items-start justify-between mb-3">
                   <div>
                     <h3 className="font-semibold text-gray-900">{biz.name}</h3>
-                    <span className="badge bg-brand-100 text-brand-700 mt-1">{TYPE_LABELS[biz.type] || biz.type}</span>
+                    <span className="badge bg-brand-100 text-brand-700 mt-1">{getTypeLabel(biz.type)}</span>
                   </div>
                   <div className="flex gap-1">
                     <button onClick={() => openEdit(biz)} className="touch-target flex items-center justify-center text-gray-400 hover:text-brand-600 rounded-lg p-1">
@@ -137,7 +170,6 @@ export default function AdminBusinesses() {
                     </button>
                   </div>
                 </div>
-                {biz.description && <p className="text-sm text-gray-500 mb-3 line-clamp-2">{biz.description}</p>}
                 <div className="grid grid-cols-4 gap-2 text-center">
                   <div>
                     <p className="text-lg font-bold text-gray-900">{biz.task_count}</p>
@@ -179,10 +211,9 @@ export default function AdminBusinesses() {
                   <tr key={biz.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3">
                       <div className="font-medium text-gray-900">{biz.name}</div>
-                      {biz.description && <div className="text-sm text-gray-500 line-clamp-1">{biz.description}</div>}
                     </td>
                     <td className="px-4 py-3">
-                      <span className="badge bg-brand-100 text-brand-700">{TYPE_LABELS[biz.type] || biz.type}</span>
+                      <span className="badge bg-brand-100 text-brand-700">{getTypeLabel(biz.type)}</span>
                     </td>
                     <td className="text-center px-4 py-3 font-medium">{biz.task_count}</td>
                     <td className="text-center px-4 py-3"><span className="text-green-600 font-medium">{biz.completed_count}</span></td>
@@ -231,21 +262,24 @@ export default function AdminBusinesses() {
               onChange={(e) => setForm({ ...form, type: e.target.value })}
               className="input"
             >
-              {BUSINESS_TYPES.map((t) => (
-                <option key={t.value} value={t.value}>{t.label}</option>
+              {typeOptions.map((t) => (
+                <option key={t} value={t}>{getTypeLabel(t)}</option>
               ))}
+              <option value="__custom__">+ Add New Type</option>
             </select>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-            <textarea
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              className="input"
-              rows={3}
-              placeholder="Optional description"
-            />
-          </div>
+          {form.type === '__custom__' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">New Type Name</label>
+              <input
+                type="text"
+                value={form.customType}
+                onChange={(e) => setForm({ ...form, customType: e.target.value })}
+                className="input"
+                placeholder="e.g. Retail, Warehouse, etc."
+              />
+            </div>
+          )}
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={() => setModalOpen(false)} className="btn-secondary flex-1">Cancel</button>
             <button type="submit" disabled={saving} className="btn-primary flex-1">
