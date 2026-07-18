@@ -1,11 +1,15 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Home, CheckSquare, Bell, User, LogOut, Building2, Users, AlertTriangle, X, Lock } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
+import { useLang } from '../context/LanguageContext';
+import { Home, CheckSquare, Bell, User, LogOut, Building2, Users, AlertTriangle, X, Lock, Moon, Sun } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import api from '../api/client';
 
 export default function Layout({ children }) {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+  const { lang, toggleLang, t } = useLang();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -48,9 +52,9 @@ export default function Layout({ children }) {
   };
 
   const ROLE_LABEL = {
-    super_admin: 'Super Admin',
-    admin: 'Admin',
-    user: 'User',
+    super_admin: t('superAdmin'),
+    admin: t('admin'),
+    user: t('user'),
   };
 
   const STATUS_DOT = {
@@ -69,43 +73,59 @@ export default function Layout({ children }) {
 
   const navItems = isAdmin
     ? [
-        { to: '/admin', label: 'Dashboard', icon: Home },
-        { to: '/admin/businesses', label: 'Businesses', icon: Building2 },
-        { to: '/admin/tasks', label: 'Tasks', icon: CheckSquare },
-        { to: '/admin/users', label: 'Users', icon: Users },
-        { to: '/notifications', label: 'Notifications', icon: Bell },
+        { to: '/admin', label: t('dashboard'), icon: Home },
+        { to: '/admin/businesses', label: t('businesses'), icon: Building2 },
+        { to: '/admin/tasks', label: t('tasks'), icon: CheckSquare },
+        { to: '/admin/users', label: t('users'), icon: Users },
+        { to: '/notifications', label: t('notifications'), icon: Bell },
         ...(user?.role === 'super_admin'
-          ? [{ to: '/admin/super-users', label: 'User Passwords', icon: Lock }]
+          ? [{ to: '/admin/super-users', label: t('userPasswords'), icon: Lock }]
           : []),
-        { to: '/profile', label: 'Profile', icon: User },
+        { to: '/profile', label: t('profile'), icon: User },
       ]
     : [
-        { to: '/dashboard', label: 'Home', icon: Home },
-        { to: '/tasks', label: 'Tasks', icon: CheckSquare },
-        { to: '/notifications', label: 'Notifications', icon: Bell },
-        { to: '/profile', label: 'Profile', icon: User },
+        { to: '/dashboard', label: t('home'), icon: Home },
+        { to: '/tasks', label: t('tasks'), icon: CheckSquare },
+        { to: '/notifications', label: t('notifications'), icon: Bell },
+        { to: '/profile', label: t('profile'), icon: User },
       ];
 
   const mobileNavItems = isAdmin
     ? [
-        { to: '/admin', label: 'Home', icon: Home },
-        { to: '/admin/tasks', label: 'Tasks', icon: CheckSquare },
-        { to: '/notifications', label: 'Alerts', icon: Bell },
-        { to: '/profile', label: 'Profile', icon: User },
+        { to: '/admin', label: t('home'), icon: Home },
+        { to: '/admin/tasks', label: t('tasks'), icon: CheckSquare },
+        { to: '/notifications', label: t('alerts'), icon: Bell },
+        { to: '/profile', label: t('profile'), icon: User },
       ]
     : [
-        { to: '/dashboard', label: 'Home', icon: Home },
-        { to: '/tasks', label: 'Tasks', icon: CheckSquare },
-        { to: '/notifications', label: 'Alerts', icon: Bell },
-        { to: '/profile', label: 'Profile', icon: User },
+        { to: '/dashboard', label: t('home'), icon: Home },
+        { to: '/tasks', label: t('tasks'), icon: CheckSquare },
+        { to: '/notifications', label: t('alerts'), icon: Bell },
+        { to: '/profile', label: t('profile'), icon: User },
       ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200 flex-col z-30">
-        <div className="h-16 flex items-center px-6 border-b border-gray-200">
-          <span className="text-xl font-bold text-brand-600">TaskHub</span>
+      <aside className="hidden lg:flex fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200 flex-col z-30 dark:bg-gray-800 dark:border-gray-700">
+        <div className="h-16 flex items-center justify-between px-6 border-b border-gray-200 dark:border-gray-700">
+          <span className="text-xl font-bold text-brand-600">{t('appName')}</span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={toggleLang}
+              className="text-xs font-medium px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              title="Toggle language"
+            >
+              {lang === 'en' ? 'EN' : 'TE'}
+            </button>
+            <button
+              onClick={toggleTheme}
+              className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+              title="Toggle theme"
+            >
+              {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+            </button>
+          </div>
         </div>
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
           {navItems.map((item) => (
@@ -116,8 +136,8 @@ export default function Layout({ children }) {
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                   isActive
-                    ? 'bg-brand-50 text-brand-700'
-                    : 'text-gray-600 hover:bg-gray-100'
+                    ? 'bg-brand-50 text-brand-700 dark:bg-brand-900/30 dark:text-brand-300'
+                    : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
                 }`
               }
             >
@@ -129,12 +149,12 @@ export default function Layout({ children }) {
             </NavLink>
           ))}
         </nav>
-        <div className="p-3 border-t border-gray-200">
+        <div className="p-3 border-t border-gray-200 dark:border-gray-700">
           <NavLink
             to="/profile"
             className={({ isActive }) =>
               `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
-                isActive ? 'bg-brand-50' : 'hover:bg-gray-100'
+                isActive ? 'bg-brand-50 dark:bg-brand-900/30' : 'hover:bg-gray-100 dark:hover:bg-gray-700'
               }`
             }
           >
@@ -142,37 +162,51 @@ export default function Layout({ children }) {
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold ${ROLE_AVATAR[user?.role] || ROLE_AVATAR.user}`}>
                 {getInitials(user?.name)}
               </div>
-              <span className={`absolute bottom-0 right-0 block w-2.5 h-2.5 rounded-full border-2 border-white ${STATUS_DOT[user?.status] || STATUS_DOT.inactive}`}></span>
+              <span className={`absolute bottom-0 right-0 block w-2.5 h-2.5 rounded-full border-2 border-white dark:border-gray-800 ${STATUS_DOT[user?.status] || STATUS_DOT.inactive}`}></span>
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5">
-                <p className="text-sm font-medium text-gray-900 truncate">{user?.name}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{user?.name}</p>
               </div>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span className={`badge text-[10px] leading-none ${ROLE_BADGE[user?.role] || ROLE_BADGE.user}`}>
-                  {ROLE_LABEL[user?.role] || 'User'}
+                  {ROLE_LABEL[user?.role] || t('user')}
                 </span>
               </div>
-              <p className="text-xs text-gray-500 truncate mt-0.5">{user?.email}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">{user?.email}</p>
             </div>
           </NavLink>
 
-          <div className="my-2 border-t border-gray-100" />
+          <div className="my-2 border-t border-gray-100 dark:border-gray-700" />
 
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 w-full"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 w-full"
           >
             <LogOut size={20} />
-            Logout
+            {t('logout')}
           </button>
         </div>
       </aside>
 
       {/* Mobile Header */}
-      <header className="lg:hidden sticky top-0 z-30 bg-white border-b border-gray-200 h-14 flex items-center justify-between px-4">
-        <span className="text-lg font-bold text-brand-600">TaskHub</span>
-        <span className="text-sm text-gray-500">{user?.name?.split(' ')[0]}</span>
+      <header className="lg:hidden sticky top-0 z-30 bg-white border-b border-gray-200 h-14 flex items-center justify-between px-4 dark:bg-gray-800 dark:border-gray-700">
+        <span className="text-lg font-bold text-brand-600">{t('appName')}</span>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={toggleLang}
+            className="text-xs font-medium px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
+          >
+            {lang === 'en' ? 'EN' : 'TE'}
+          </button>
+          <button
+            onClick={toggleTheme}
+            className="text-gray-500 dark:text-gray-400"
+          >
+            {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+          </button>
+          <span className="text-sm text-gray-500 dark:text-gray-400">{user?.name?.split(' ')[0]}</span>
+        </div>
       </header>
 
       {/* Main Content */}
@@ -183,7 +217,7 @@ export default function Layout({ children }) {
       </main>
 
       {/* Mobile Bottom Nav */}
-      <nav className="bottom-nav lg:hidden fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 z-30">
+      <nav className="bottom-nav lg:hidden fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 z-30 dark:bg-gray-800 dark:border-gray-700">
         <div className="flex justify-around items-center h-16">
           {mobileNavItems.map((item) => (
             <NavLink
@@ -192,7 +226,7 @@ export default function Layout({ children }) {
               end={item.to === '/admin' || item.to === '/dashboard'}
               className={({ isActive }) =>
                 `flex flex-col items-center justify-center gap-0.5 flex-1 h-full touch-target relative ${
-                  isActive ? 'text-brand-600' : 'text-gray-400'
+                  isActive ? 'text-brand-600' : 'text-gray-400 dark:text-gray-500'
                 }`
               }
             >

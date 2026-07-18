@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useLang } from '../context/LanguageContext';
 import api from '../api/client';
 import Modal from '../components/Modal';
 import { useAuth } from '../context/AuthContext';
@@ -6,6 +7,7 @@ import { UserPlus, Users as UsersIcon, Building2, Mail, Shield, ArrowUpCircle, A
 
 export default function AdminUsers() {
   const { user: currentUser } = useAuth();
+  const { t } = useLang();
   const isSuperAdmin = currentUser?.role === 'super_admin';
   const [unassigned, setUnassigned] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
@@ -35,7 +37,7 @@ export default function AdminUsers() {
       setAllUsers(usersRes.users || usersRes.data.users);
       setBusinesses(bizRes.data.businesses);
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to load users');
+      setError(err.response?.data?.error || t('failedLoadUsers'));
     } finally {
       setLoading(false);
     }
@@ -69,7 +71,7 @@ export default function AdminUsers() {
       setAssignModalOpen(false);
       fetchData();
     } catch (err) {
-      setAssignError(err.response?.data?.error || 'Failed to assign user');
+      setAssignError(err.response?.data?.error || t('failedAssignUser'));
     } finally {
       setAssigning(false);
     }
@@ -92,19 +94,19 @@ export default function AdminUsers() {
       setRoleModalOpen(false);
       fetchData();
     } catch (err) {
-      setRoleError(err.response?.data?.error || 'Failed to update role');
+      setRoleError(err.response?.data?.error || t('failedUpdateRole'));
     } finally {
       setChangingRole(false);
     }
   };
 
   const handleDeleteUser = async (userId, userName) => {
-    if (!confirm(`Are you sure you want to delete user "${userName}"? This action cannot be undone.`)) return;
+    if (!confirm(t('deleteUserConfirmMsg').replace('{name}', userName))) return;
     try {
       await api.delete(`/users/${userId}`);
       fetchData();
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to delete user');
+      setError(err.response?.data?.error || t('failedDeleteUser'));
     }
   };
 
@@ -136,7 +138,7 @@ export default function AdminUsers() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Users</h1>
+      <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100">{t('users')}</h1>
 
       {error && (
         <div className="mb-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
@@ -148,7 +150,7 @@ export default function AdminUsers() {
       <div className="mb-8">
         <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
           <UserPlus size={20} className="text-brand-600" />
-          Unassigned Users
+          {t('unassignedUsers')}
           {unassigned.length > 0 && (
             <span className="badge bg-brand-100 text-brand-700">{unassigned.length}</span>
           )}
@@ -157,7 +159,7 @@ export default function AdminUsers() {
         {unassigned.length === 0 ? (
           <div className="card text-center py-8">
             <UsersIcon size={32} className="mx-auto text-gray-300 mb-2" />
-            <p className="text-gray-500 text-sm">No unassigned users. All users are assigned to a business.</p>
+            <p className="text-gray-500 dark:text-gray-400 text-sm">{t('noUnassignedUsers')}</p>
           </div>
         ) : (
           <>
@@ -167,20 +169,20 @@ export default function AdminUsers() {
                 <div key={user.id} className="card">
                   <div className="flex items-start justify-between mb-3">
                     <div>
-                      <p className="font-medium text-gray-900">{user.name}</p>
-                      <p className="text-sm text-gray-500">{user.email}</p>
+                      <p className="font-medium text-gray-900 dark:text-gray-100">{user.name}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
                     </div>
                     {statusBadge(user.status)}
                   </div>
                   <div className="flex items-center gap-2">
                     <button onClick={() => openAssignModal(user)} className="btn-primary flex-1">
                       <Building2 size={16} className="mr-1" />
-                      Assign to Business
+                      {t('assignToBusiness')}
                     </button>
                     <button
                       onClick={() => handleDeleteUser(user.id, user.name)}
                       className="btn-ghost touch-target text-gray-500 hover:text-red-600 hover:bg-red-50"
-                      title="Delete User"
+                      title={t('deleteUser')}
                     >
                       <Trash2 size={16} />
                     </button>
@@ -192,30 +194,30 @@ export default function AdminUsers() {
             {/* Desktop: Table */}
             <div className="hidden lg:block card overflow-hidden p-0">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="bg-gray-50 border-b border-gray-200 dark:bg-gray-700 dark:border-gray-600">
                   <tr>
-                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-600">Name</th>
-                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-600">Email</th>
-                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-600">Status</th>
-                    <th className="text-center px-4 py-3 text-sm font-medium text-gray-600 w-32">Action</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300">{t('name')}</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300">{t('email')}</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300">{t('statusLabel')}</th>
+                    <th className="text-center px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300 w-32">{t('action')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {unassigned.map((user) => (
-                    <tr key={user.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 font-medium">{user.name}</td>
-                      <td className="px-4 py-3 text-gray-600">{user.email}</td>
+                    <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                      <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{user.name}</td>
+                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{user.email}</td>
                       <td className="px-4 py-3">{statusBadge(user.status)}</td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-center gap-2">
                           <button onClick={() => openAssignModal(user)} className="btn-primary text-sm">
                             <Building2 size={16} className="mr-1" />
-                            Assign
+                            {t('assign')}
                           </button>
                           <button
                             onClick={() => handleDeleteUser(user.id, user.name)}
                             className="btn-ghost touch-target text-gray-500 hover:text-red-600 hover:bg-red-50"
-                            title="Delete User"
+                            title={t('deleteUser')}
                           >
                             <Trash2 size={16} />
                           </button>
@@ -234,7 +236,7 @@ export default function AdminUsers() {
       <div className="mb-8">
         <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
           <Shield size={20} className="text-purple-600" />
-          Admins
+          {t('admins')}
           {adminUsers.length > 0 && (
             <span className="badge bg-purple-100 text-purple-700">{adminUsers.length}</span>
           )}
@@ -243,7 +245,7 @@ export default function AdminUsers() {
         {adminUsers.length === 0 ? (
           <div className="card text-center py-8">
             <Shield size={32} className="mx-auto text-gray-300 mb-2" />
-            <p className="text-gray-500 text-sm">No admin users.</p>
+            <p className="text-gray-500 dark:text-gray-400 text-sm">{t('noAdminUsers')}</p>
           </div>
         ) : (
           <>
@@ -253,8 +255,8 @@ export default function AdminUsers() {
                 <div key={user.id} className="card">
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900 truncate">{user.name}</p>
-                      <p className="text-sm text-gray-500 truncate">{user.email}</p>
+                      <p className="font-medium text-gray-900 dark:text-gray-100 truncate">{user.name}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
                     </div>
                     <div className="flex flex-col items-end gap-1 ml-2">
                       <span className={`badge ${roleBadgeClass(user.role)}`}>
@@ -264,17 +266,17 @@ export default function AdminUsers() {
                     </div>
                   </div>
                   {isSuperAdmin && (
-                    <div className="flex items-center justify-center gap-4 pt-2 mt-2 border-t border-gray-100">
+                    <div className="flex items-center justify-center gap-4 pt-2 mt-2 border-t border-gray-100 dark:border-gray-700">
                       <button onClick={() => openRoleModal(user, 'demote')} className="flex flex-col items-center gap-0.5 text-xs text-red-600 hover:text-red-700 touch-target">
                         <ArrowDownCircle size={16} />
-                        <span>Demote</span>
+                        <span>{t('demote')}</span>
                       </button>
                       <button
                         onClick={() => handleDeleteUser(user.id, user.name)}
                         className="flex flex-col items-center gap-0.5 text-xs text-gray-500 hover:text-red-600 touch-target"
                       >
                         <Trash2 size={16} />
-                        <span>Delete</span>
+                        <span>{t('delete')}</span>
                       </button>
                     </div>
                   )}
@@ -285,20 +287,20 @@ export default function AdminUsers() {
             {/* Desktop: Table */}
             <div className="hidden lg:block card overflow-hidden p-0">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="bg-gray-50 border-b border-gray-200 dark:bg-gray-700 dark:border-gray-600">
                   <tr>
-                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-600">Name</th>
-                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-600">Email</th>
-                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-600">Role</th>
-                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-600">Status</th>
-                    <th className="text-center px-4 py-3 text-sm font-medium text-gray-600 w-32">Action</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300">{t('name')}</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300">{t('email')}</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300">{t('role')}</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300">{t('statusLabel')}</th>
+                    <th className="text-center px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300 w-32">{t('action')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {adminUsers.map((user) => (
-                    <tr key={user.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 font-medium">{user.name}</td>
-                      <td className="px-4 py-3 text-gray-600">{user.email}</td>
+                    <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                      <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{user.name}</td>
+                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{user.email}</td>
                       <td className="px-4 py-3">
                         <span className={`badge ${roleBadgeClass(user.role)}`}>
                           {user.role}
@@ -310,7 +312,7 @@ export default function AdminUsers() {
                           {isSuperAdmin && (
                             <button onClick={() => openRoleModal(user, 'demote')} className="flex flex-col items-center gap-0.5 text-xs text-red-600 hover:text-red-700 touch-target">
                               <ArrowDownCircle size={16} />
-                              <span>Demote</span>
+                              <span>{t('demote')}</span>
                             </button>
                           )}
                           {isSuperAdmin && (
@@ -319,7 +321,7 @@ export default function AdminUsers() {
                               className="flex flex-col items-center gap-0.5 text-xs text-gray-500 hover:text-red-600 touch-target"
                             >
                               <Trash2 size={16} />
-                              <span>Delete</span>
+                              <span>{t('delete')}</span>
                             </button>
                           )}
                         </div>
@@ -337,7 +339,7 @@ export default function AdminUsers() {
       <div>
         <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
           <UsersIcon size={20} className="text-gray-600" />
-          Users
+          {t('users')}
           {regularUsers.length > 0 && (
             <span className="badge bg-blue-100 text-blue-700">{regularUsers.length}</span>
           )}
@@ -346,7 +348,7 @@ export default function AdminUsers() {
         {regularUsers.length === 0 ? (
           <div className="card text-center py-8">
             <UsersIcon size={32} className="mx-auto text-gray-300 mb-2" />
-            <p className="text-gray-500 text-sm">No regular users.</p>
+            <p className="text-gray-500 dark:text-gray-400 text-sm">{t('noRegularUsers')}</p>
           </div>
         ) : (
           <>
@@ -356,8 +358,8 @@ export default function AdminUsers() {
                 <div key={user.id} className="card">
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900 truncate">{user.name}</p>
-                      <p className="text-sm text-gray-500 truncate">{user.email}</p>
+                      <p className="font-medium text-gray-900 dark:text-gray-100 truncate">{user.name}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
                     </div>
                     <div className="flex flex-col items-end gap-1 ml-2">
                       <span className={`badge ${roleBadgeClass(user.role)}`}>
@@ -367,19 +369,19 @@ export default function AdminUsers() {
                     </div>
                   </div>
                   <div className="mt-2">
-                    <div className="flex items-center gap-1.5 text-sm text-gray-600 mb-3">
+                    <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 mb-3">
                       <Building2 size={14} className="text-gray-400 flex-shrink-0" />
-                      <span className="truncate">{user.businesses?.map((b) => b.name).join(', ') || 'Unassigned'}</span>
+                      <span className="truncate">{user.businesses?.map((b) => b.name).join(', ') || t('unassigned')}</span>
                     </div>
-                    <div className="flex items-center justify-center gap-4 pt-2 border-t border-gray-100">
+                    <div className="flex items-center justify-center gap-4 pt-2 border-t border-gray-100 dark:border-gray-700">
                       <button onClick={() => openAssignModal(user)} className="flex flex-col items-center gap-0.5 text-xs text-gray-600 hover:text-brand-600 touch-target">
                         <Pencil size={16} />
-                        <span>{user.business_id ? 'Reassign' : 'Assign'}</span>
+                        <span>{user.business_id ? t('reassign') : t('assign')}</span>
                       </button>
                       {isSuperAdmin && (
                         <button onClick={() => openRoleModal(user, 'promote')} className="flex flex-col items-center gap-0.5 text-xs text-green-600 hover:text-green-700 touch-target">
                           <ArrowUpCircle size={16} />
-                          <span>Promote</span>
+                          <span>{t('promote')}</span>
                         </button>
                       )}
                       <button
@@ -387,7 +389,7 @@ export default function AdminUsers() {
                         className="flex flex-col items-center gap-0.5 text-xs text-gray-500 hover:text-red-600 touch-target"
                       >
                         <Trash2 size={16} />
-                        <span>Delete</span>
+                        <span>{t('delete')}</span>
                       </button>
                     </div>
                   </div>
@@ -398,32 +400,32 @@ export default function AdminUsers() {
             {/* Desktop: Table */}
             <div className="hidden lg:block card overflow-hidden p-0">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="bg-gray-50 border-b border-gray-200 dark:bg-gray-700 dark:border-gray-600">
                   <tr>
-                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-600">Name</th>
-                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-600">Email</th>
-                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-600">Business</th>
-                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-600">Status</th>
-                    <th className="text-center px-4 py-3 text-sm font-medium text-gray-600 w-32">Actions</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300">{t('name')}</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300">{t('email')}</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300">{t('business')}</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300">{t('statusLabel')}</th>
+                    <th className="text-center px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300 w-32">{t('actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {regularUsers.map((user) => (
-                    <tr key={user.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 font-medium">{user.name}</td>
-                      <td className="px-4 py-3 text-gray-600">{user.email}</td>
-                      <td className="px-4 py-3 text-gray-600">{user.businesses?.map((b) => b.name).join(', ') || <span className="text-gray-400 italic">Unassigned</span>}</td>
+                    <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                      <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{user.name}</td>
+                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{user.email}</td>
+                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{user.businesses?.map((b) => b.name).join(', ') || <span className="text-gray-400 italic">{t('unassigned')}</span>}</td>
                       <td className="px-4 py-3">{statusBadge(user.status)}</td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-center gap-3">
                           <button onClick={() => openAssignModal(user)} className="flex flex-col items-center gap-0.5 text-xs text-gray-600 hover:text-brand-600 touch-target">
                             <Pencil size={16} />
-                            <span>{user.business_id ? 'Reassign' : 'Assign'}</span>
+                            <span>{user.business_id ? t('reassign') : t('assign')}</span>
                           </button>
                           {isSuperAdmin && (
                             <button onClick={() => openRoleModal(user, 'promote')} className="flex flex-col items-center gap-0.5 text-xs text-green-600 hover:text-green-700 touch-target">
                               <ArrowUpCircle size={16} />
-                              <span>Promote</span>
+                              <span>{t('promote')}</span>
                             </button>
                           )}
                           <button
@@ -431,7 +433,7 @@ export default function AdminUsers() {
                             className="flex flex-col items-center gap-0.5 text-xs text-gray-500 hover:text-red-600 touch-target"
                           >
                             <Trash2 size={16} />
-                            <span>Delete</span>
+                            <span>{t('delete')}</span>
                           </button>
                         </div>
                       </td>
@@ -445,7 +447,7 @@ export default function AdminUsers() {
       </div>
 
       {/* Assign Modal */}
-      <Modal open={assignModalOpen} onClose={() => setAssignModalOpen(false)} title="Assign User to Businesses">
+      <Modal open={assignModalOpen} onClose={() => setAssignModalOpen(false)} title={t('assignUserToBusinesses')}>
         <form onSubmit={handleAssign} className="space-y-4">
           {assignError && (
             <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
@@ -453,36 +455,36 @@ export default function AdminUsers() {
             </div>
           )}
           {selectedUser && (
-            <div className="rounded-lg bg-gray-50 px-4 py-3 mb-2">
-              <p className="font-medium text-gray-900">{selectedUser.name}</p>
-              <p className="text-sm text-gray-500">{selectedUser.email}</p>
+            <div className="rounded-lg bg-gray-50 px-4 py-3 mb-2 dark:bg-gray-700">
+              <p className="font-medium text-gray-900 dark:text-gray-100">{selectedUser.name}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{selectedUser.email}</p>
             </div>
           )}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Select Businesses (multiple allowed)</label>
-            <div className="max-h-48 overflow-y-auto space-y-2 rounded-lg border border-gray-200 p-3">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('selectBusinessesMultiple')}</label>
+            <div className="max-h-48 overflow-y-auto space-y-2 rounded-lg border border-gray-200 dark:border-gray-600 p-3">
               {businesses.map((biz) => (
-                <label key={biz.id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 rounded-md px-2 py-1.5">
+                <label key={biz.id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md px-2 py-1.5">
                   <input
                     type="checkbox"
                     checked={selectedBusinessIds.includes(biz.id)}
                     onChange={() => toggleBusinessSelection(biz.id)}
                     className="rounded border-gray-300 text-brand-600 focus:ring-brand-500"
                   />
-                  <span className="text-sm text-gray-700">{biz.name}</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">{biz.name}</span>
                 </label>
               ))}
             </div>
             {selectedBusinessIds.length > 0 ? (
-              <p className="text-xs text-gray-500 mt-1.5">{selectedBusinessIds.length} business{selectedBusinessIds.length > 1 ? 'es' : ''} selected</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">{selectedBusinessIds.length} {t('businessesSelected')}</p>
             ) : (
-              <p className="text-xs text-amber-600 mt-1.5">No businesses selected — user will be unassigned</p>
+              <p className="text-xs text-amber-600 mt-1.5">{t('noBusinessesSelected')}</p>
             )}
           </div>
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={() => setAssignModalOpen(false)} className="btn-secondary flex-1">Cancel</button>
+            <button type="button" onClick={() => setAssignModalOpen(false)} className="btn-secondary flex-1">{t('cancel')}</button>
             <button type="submit" disabled={assigning} className="btn-primary flex-1">
-              {assigning ? 'Assigning...' : 'Assign'}
+              {assigning ? t('assigning') : t('assign')}
             </button>
           </div>
         </form>
@@ -492,7 +494,7 @@ export default function AdminUsers() {
       <Modal
         open={roleModalOpen}
         onClose={() => setRoleModalOpen(false)}
-        title={roleModalAction === 'promote' ? 'Promote to Admin' : 'Demote to User'}
+        title={roleModalAction === 'promote' ? t('promoteToAdmin') : t('demoteToUser')}
       >
         <form onSubmit={handleRoleChange} className="space-y-4">
           {roleError && (
@@ -501,30 +503,30 @@ export default function AdminUsers() {
             </div>
           )}
           {roleModalUser && (
-            <div className="rounded-lg bg-gray-50 px-4 py-3 mb-2">
-              <p className="font-medium text-gray-900">{roleModalUser.name}</p>
-              <p className="text-sm text-gray-500">{roleModalUser.email}</p>
-              <p className="text-sm text-gray-600 mt-1">
-                Current role: <span className="font-medium">{roleModalUser.role}</span>
+            <div className="rounded-lg bg-gray-50 px-4 py-3 mb-2 dark:bg-gray-700">
+              <p className="font-medium text-gray-900 dark:text-gray-100">{roleModalUser.name}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{roleModalUser.email}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                {t('currentRole')}: <span className="font-medium">{roleModalUser.role}</span>
               </p>
             </div>
           )}
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
             {roleModalAction === 'promote'
-              ? 'This will promote the user to admin, granting them access to the admin dashboard and all admin features.'
-              : 'This will demote the admin back to a regular user. They will lose access to the admin dashboard.'}
+              ? t('promoteDesc')
+              : t('demoteDesc')}
           </p>
-          <p className="text-sm font-medium text-gray-700">
-            Are you sure you want to continue?
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            {t('areYouSureContinue')}
           </p>
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={() => setRoleModalOpen(false)} className="btn-secondary flex-1">Cancel</button>
+            <button type="button" onClick={() => setRoleModalOpen(false)} className="btn-secondary flex-1">{t('cancel')}</button>
             <button
               type="submit"
               disabled={changingRole}
               className={`flex-1 ${roleModalAction === 'promote' ? 'btn-primary' : 'btn-secondary'}`}
             >
-              {changingRole ? 'Updating...' : roleModalAction === 'promote' ? 'Promote to Admin' : 'Demote to User'}
+              {changingRole ? t('updating') : roleModalAction === 'promote' ? t('promoteToAdmin') : t('demoteToUser')}
             </button>
           </div>
         </form>

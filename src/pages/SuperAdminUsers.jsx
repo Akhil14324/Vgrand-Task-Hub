@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useLang } from '../context/LanguageContext';
 import api from '../api/client';
 import Modal from '../components/Modal';
 import { Shield, Users as UsersIcon, Lock, Key } from 'lucide-react';
 
 export default function SuperAdminUsers() {
   const { user: currentUser } = useAuth();
+  const { t } = useLang();
   const [allUsers, setAllUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -23,7 +25,7 @@ export default function SuperAdminUsers() {
       const res = await api.get('/users');
       setAllUsers(res.users || res.data.users || []);
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to load users');
+      setError(err.response?.data?.error || t('failedLoadUsers'));
     } finally {
       setLoading(false);
     }
@@ -45,17 +47,17 @@ export default function SuperAdminUsers() {
     e.preventDefault();
     setPwError('');
     if (!newPassword || newPassword.length < 6) {
-      setPwError('Password must be at least 6 characters');
+      setPwError(t('passwordMinLengthError'));
       return;
     }
     setSavingPw(true);
     try {
       await api.put(`/users/${selectedUser.id}/password`, { new_password: newPassword });
-      setPwSuccess(`Password updated for ${selectedUser.name}`);
+      setPwSuccess(t('passwordUpdatedFor').replace('{name}', selectedUser.name));
       setPwModalOpen(false);
       setTimeout(() => setPwSuccess(''), 3000);
     } catch (err) {
-      setPwError(err.response?.data?.error || 'Failed to update password');
+      setPwError(err.response?.data?.error || t('failedUpdatePassword'));
     } finally {
       setSavingPw(false);
     }
@@ -89,7 +91,7 @@ export default function SuperAdminUsers() {
 
       {users.length === 0 ? (
         <div className="card text-center py-8">
-          <p className="text-gray-500 text-sm">No {title.toLowerCase()} found.</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">{title === t('admins') ? t('noAdminsFound') : t('noUsersFound')}</p>
         </div>
       ) : (
         <>
@@ -99,8 +101,8 @@ export default function SuperAdminUsers() {
               <div key={u.id} className="card">
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-900 truncate">{u.name}</p>
-                    <p className="text-sm text-gray-500 truncate">{u.email}</p>
+                    <p className="font-medium text-gray-900 dark:text-gray-100 truncate">{u.name}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{u.email}</p>
                   </div>
                   <span className={`badge ${roleBadgeClass(u.role)}`}>{u.role}</span>
                 </div>
@@ -109,7 +111,7 @@ export default function SuperAdminUsers() {
                   className="btn-secondary w-full mt-2"
                 >
                   <Key size={16} className="mr-1.5" />
-                  Change Password
+                  {t('changePassword')}
                 </button>
               </div>
             ))}
@@ -118,24 +120,24 @@ export default function SuperAdminUsers() {
           {/* Desktop: Table */}
           <div className="hidden lg:block card overflow-hidden p-0">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-gray-50 border-b border-gray-200 dark:bg-gray-700 dark:border-gray-600">
                 <tr>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-600">Username</th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-600">Email</th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-600">Role</th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-600">Joined</th>
-                  <th className="text-center px-4 py-3 text-sm font-medium text-gray-600 w-40">Action</th>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300">{t('username')}</th>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300">{t('email')}</th>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300">{t('role')}</th>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300">{t('joined')}</th>
+                  <th className="text-center px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300 w-40">{t('action')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {users.map((u) => (
-                  <tr key={u.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 font-medium">{u.name}</td>
-                    <td className="px-4 py-3 text-gray-600">{u.email}</td>
+                  <tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                    <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{u.name}</td>
+                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{u.email}</td>
                     <td className="px-4 py-3">
                       <span className={`badge ${roleBadgeClass(u.role)}`}>{u.role}</span>
                     </td>
-                    <td className="px-4 py-3 text-gray-500 text-sm">{formatDate(u.created_at)}</td>
+                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400 text-sm">{formatDate(u.created_at)}</td>
                     <td className="px-4 py-3">
                       <div className="flex justify-center">
                         <button
@@ -143,7 +145,7 @@ export default function SuperAdminUsers() {
                           className="btn-secondary text-sm"
                         >
                           <Key size={16} className="mr-1.5" />
-                          Change Password
+                          {t('changePassword')}
                         </button>
                       </div>
                     </td>
@@ -167,7 +169,7 @@ export default function SuperAdminUsers() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">All Users</h1>
+      <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100">{t('allUsers')}</h1>
 
       {pwSuccess && (
         <div className="mb-4 rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700">
@@ -181,11 +183,11 @@ export default function SuperAdminUsers() {
         </div>
       )}
 
-      <UserTable users={adminUsers} title="Admins" icon={Shield} color="text-purple-700" />
-      <UserTable users={regularUsers} title="Users" icon={UsersIcon} color="text-blue-700" />
+      <UserTable users={adminUsers} title={t('admins')} icon={Shield} color="text-purple-700" />
+      <UserTable users={regularUsers} title={t('users')} icon={UsersIcon} color="text-blue-700" />
 
       {/* Change Password Modal */}
-      <Modal open={pwModalOpen} onClose={() => setPwModalOpen(false)} title="Change User Password">
+      <Modal open={pwModalOpen} onClose={() => setPwModalOpen(false)} title={t('changeUserPassword')}>
         <form onSubmit={handlePwSave} className="space-y-4">
           {pwError && (
             <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
@@ -193,14 +195,14 @@ export default function SuperAdminUsers() {
             </div>
           )}
           {selectedUser && (
-            <div className="rounded-lg bg-gray-50 px-4 py-3">
-              <p className="font-medium text-gray-900">{selectedUser.name}</p>
-              <p className="text-sm text-gray-500">{selectedUser.email}</p>
-              <p className="text-sm text-gray-600 mt-1">Role: <span className="font-medium">{selectedUser.role}</span></p>
+            <div className="rounded-lg bg-gray-50 px-4 py-3 dark:bg-gray-700">
+              <p className="font-medium text-gray-900 dark:text-gray-100">{selectedUser.name}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{selectedUser.email}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{t('role')}: <span className="font-medium">{selectedUser.role}</span></p>
             </div>
           )}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('newPassword')}</label>
             <input
               type="password"
               value={newPassword}
@@ -211,9 +213,9 @@ export default function SuperAdminUsers() {
             />
           </div>
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={() => setPwModalOpen(false)} className="btn-secondary flex-1">Cancel</button>
+            <button type="button" onClick={() => setPwModalOpen(false)} className="btn-secondary flex-1">{t('cancel')}</button>
             <button type="submit" disabled={savingPw} className="btn-primary flex-1">
-              {savingPw ? 'Updating...' : 'Update Password'}
+              {savingPw ? t('updating') : t('updatePassword')}
             </button>
           </div>
         </form>

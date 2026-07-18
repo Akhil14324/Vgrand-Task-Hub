@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useLang } from '../context/LanguageContext';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
 import Modal from '../components/Modal';
@@ -21,9 +22,9 @@ const ROLE_BADGE = {
 };
 
 const ROLE_LABEL = {
-  super_admin: 'Super Admin',
-  admin: 'Admin',
-  user: 'User',
+  super_admin: 'superAdmin',
+  admin: 'admin',
+  user: 'user',
 };
 
 const STATUS_BADGE = {
@@ -76,6 +77,7 @@ function SkeletonStats() {
 
 export default function Profile() {
   const { user, logout, refreshUser } = useAuth();
+  const { t } = useLang();
   const navigate = useNavigate();
   const isAdmin = ['admin', 'super_admin'].includes(user?.role);
 
@@ -128,18 +130,18 @@ export default function Profile() {
     setEditError('');
     const trimmed = editName.trim();
     if (!trimmed) {
-      setEditError('Name is required');
+      setEditError(t('nameRequired'));
       return;
     }
     setSavingName(true);
     try {
       await api.put('/users/me', { name: trimmed });
       await refreshUser();
-      setEditSuccess('Profile updated successfully');
+      setEditSuccess(t('profileUpdated'));
       setEditModalOpen(false);
       setTimeout(() => setEditSuccess(''), 3000);
     } catch (err) {
-      setEditError(err.response?.data?.error || 'Failed to update profile');
+      setEditError(err.response?.data?.error || t('failedUpdateProfile'));
     } finally {
       setSavingName(false);
     }
@@ -156,15 +158,15 @@ export default function Profile() {
     e.preventDefault();
     setPwError('');
     if (!pwForm.current_password || !pwForm.new_password) {
-      setPwError('All fields are required');
+      setPwError(t('allFieldsRequired'));
       return;
     }
     if (pwForm.new_password.length < 6) {
-      setPwError('New password must be at least 6 characters');
+      setPwError(t('passwordMinLength'));
       return;
     }
     if (pwForm.new_password !== pwForm.confirm_password) {
-      setPwError('New passwords do not match');
+      setPwError(t('passwordsDoNotMatch'));
       return;
     }
     setSavingPw(true);
@@ -173,11 +175,11 @@ export default function Profile() {
         current_password: pwForm.current_password,
         new_password: pwForm.new_password,
       });
-      setPwSuccess('Password updated successfully');
+      setPwSuccess(t('passwordUpdated'));
       setPwModalOpen(false);
       setTimeout(() => setPwSuccess(''), 3000);
     } catch (err) {
-      setPwError(err.response?.data?.error || 'Failed to update password');
+      setPwError(err.response?.data?.error || t('failedUpdatePassword'));
     } finally {
       setSavingPw(false);
     }
@@ -185,20 +187,20 @@ export default function Profile() {
 
   const avatarClass = ROLE_AVATAR[user?.role] || ROLE_AVATAR.user;
   const roleBadgeClass = ROLE_BADGE[user?.role] || ROLE_BADGE.user;
-  const roleLabel = ROLE_LABEL[user?.role] || 'User';
+  const roleLabel = t(ROLE_LABEL[user?.role] || 'user');
   const statusBadgeClass = STATUS_BADGE[user?.status] || STATUS_BADGE.active;
 
   const userStats = [
-    { label: 'Tasks Completed', value: stats?.tasks_completed ?? 0, icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-50' },
-    { label: 'Tasks Pending', value: stats?.tasks_pending ?? 0, icon: Clock, color: 'text-yellow-600', bg: 'bg-yellow-50' },
-    { label: 'Completion Rate', value: `${stats?.completion_rate ?? 0}%`, icon: TrendingUp, color: 'text-brand-600', bg: 'bg-brand-50' },
-    { label: 'Warnings', value: stats?.warnings_count ?? 0, icon: AlertTriangle, color: 'text-red-600', bg: 'bg-red-50' },
+    { label: t('tasksCompleted'), value: stats?.tasks_completed ?? 0, icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-50 dark:bg-green-900/20' },
+    { label: t('tasksPending'), value: stats?.tasks_pending ?? 0, icon: Clock, color: 'text-yellow-600', bg: 'bg-yellow-50 dark:bg-yellow-900/20' },
+    { label: t('completionRate'), value: `${stats?.completion_rate ?? 0}%`, icon: TrendingUp, color: 'text-brand-600', bg: 'bg-brand-50 dark:bg-brand-900/20' },
+    { label: t('warnings'), value: stats?.warnings_count ?? 0, icon: AlertTriangle, color: 'text-red-600', bg: 'bg-red-50 dark:bg-red-900/20' },
   ];
 
   const adminStats = [
-    { label: 'Businesses', value: stats?.businesses_count ?? 0, icon: Building2, color: 'text-brand-600', bg: 'bg-brand-50' },
-    { label: 'Total Users', value: stats?.total_users ?? 0, icon: UserIcon, color: 'text-purple-600', bg: 'bg-purple-50' },
-    { label: 'Total Tasks', value: stats?.total_tasks ?? 0, icon: CheckCircle2, color: 'text-gray-700', bg: 'bg-gray-100' },
+    { label: t('businesses'), value: stats?.businesses_count ?? 0, icon: Building2, color: 'text-brand-600', bg: 'bg-brand-50 dark:bg-brand-900/20' },
+    { label: t('users'), value: stats?.total_users ?? 0, icon: UserIcon, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-900/20' },
+    { label: t('totalTasks'), value: stats?.total_tasks ?? 0, icon: CheckCircle2, color: 'text-gray-700 dark:text-gray-300', bg: 'bg-gray-100 dark:bg-gray-700' },
   ];
 
   const statTiles = isAdmin ? adminStats : userStats;
@@ -224,7 +226,7 @@ export default function Profile() {
             <span className="text-2xl font-bold">{getInitials(user?.name)}</span>
           </div>
           <div className="flex-1 text-center sm:text-left">
-            <h2 className="text-xl font-bold text-gray-900">{user?.name}</h2>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">{user?.name}</h2>
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-2">
               <span className={`badge ${roleBadgeClass} flex items-center gap-1`} title={`${roleLabel} account`}>
                 {user?.role === 'super_admin' ? (
@@ -262,7 +264,7 @@ export default function Profile() {
           </div>
           <button onClick={openEditModal} className="btn-secondary">
             <Pencil size={16} className="mr-1.5" />
-            Edit Profile
+            {t('editProfile')}
           </button>
         </div>
         {editSuccess && (
@@ -279,8 +281,8 @@ export default function Profile() {
             <div className={`w-10 h-10 rounded-lg ${stat.bg} flex items-center justify-center mb-2`}>
               <stat.icon size={20} className={stat.color} />
             </div>
-            <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-            <p className="text-xs text-gray-500">{stat.label}</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stat.value}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">{stat.label}</p>
           </div>
         ))}
       </div>
@@ -289,10 +291,10 @@ export default function Profile() {
       <div className="card">
         <div className="flex items-center gap-2 mb-3">
           <Building2 size={18} className="text-gray-400" />
-          <h3 className="text-sm font-semibold text-gray-700">Assigned Businesses</h3>
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t('assignedBusinesses')}</h3>
         </div>
         {businesses.length === 0 ? (
-          <p className="text-sm text-gray-400 italic">Not assigned to any business yet</p>
+          <p className="text-sm text-gray-400 italic">{t('notAssignedToBusiness')}</p>
         ) : (
           <div className="flex flex-wrap gap-2">
             {businesses.map((biz) => (
@@ -307,42 +309,42 @@ export default function Profile() {
 
       {/* Account Details Card */}
       <div className="card">
-        <h3 className="text-sm font-semibold text-gray-700 mb-3">Account Details</h3>
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">{t('accountDetails')}</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+            <div className="w-9 h-9 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
               <Mail size={16} className="text-gray-400" />
             </div>
             <div className="min-w-0">
-              <p className="text-xs text-gray-400">Email</p>
-              <p className="text-sm font-medium text-gray-900 truncate">{user?.email}</p>
+              <p className="text-xs text-gray-400">{t('email')}</p>
+              <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{user?.email}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+            <div className="w-9 h-9 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
               <Calendar size={16} className="text-gray-400" />
             </div>
             <div className="min-w-0">
-              <p className="text-xs text-gray-400">Member Since</p>
-              <p className="text-sm font-medium text-gray-900">{formatDate(user?.created_at)}</p>
+              <p className="text-xs text-gray-400">{t('memberSince')}</p>
+              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{formatDate(user?.created_at)}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+            <div className="w-9 h-9 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
               <Shield size={16} className="text-gray-400" />
             </div>
             <div className="min-w-0">
-              <p className="text-xs text-gray-400">Role</p>
-              <p className="text-sm font-medium text-gray-900">{roleLabel}</p>
+              <p className="text-xs text-gray-400">{t('role')}</p>
+              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{roleLabel}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+            <div className="w-9 h-9 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
               <UserIcon size={16} className="text-gray-400" />
             </div>
             <div className="min-w-0">
-              <p className="text-xs text-gray-400">Status</p>
-              <p className="text-sm font-medium text-gray-900 capitalize">{user?.status || 'active'}</p>
+              <p className="text-xs text-gray-400">{t('statusLabel')}</p>
+              <p className="text-sm font-medium text-gray-900 dark:text-gray-100 capitalize">{user?.status || 'active'}</p>
             </div>
           </div>
         </div>
@@ -354,13 +356,13 @@ export default function Profile() {
           <div className="flex items-center gap-2">
             <Lock size={18} className="text-gray-400" />
             <div>
-              <h3 className="text-sm font-semibold text-gray-700">Security</h3>
-              <p className="text-xs text-gray-400">Change your account password</p>
+              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t('security')}</h3>
+              <p className="text-xs text-gray-400">{t('changePassword')}</p>
             </div>
           </div>
           <button onClick={openPwModal} className="btn-secondary">
             <Lock size={16} className="mr-1.5" />
-            Change Password
+            {t('changePassword')}
           </button>
         </div>
         {pwSuccess && (
@@ -375,21 +377,21 @@ export default function Profile() {
         <div className="card" id="warnings-history">
           <div className="flex items-center gap-2 mb-3">
             <AlertTriangle size={18} className="text-amber-500" />
-            <h3 className="text-sm font-semibold text-gray-700">Warnings History</h3>
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t('warningsHistory')}</h3>
           </div>
           {warnings.length === 0 ? (
-            <p className="text-sm text-gray-400 italic">No warnings received</p>
+            <p className="text-sm text-gray-400 italic">{t('noWarnings')}</p>
           ) : (
             <div className="space-y-2">
               {warnings.map((w) => (
                 <div key={w.id} className="rounded-lg bg-amber-50 border border-amber-200 px-4 py-3">
                   <div className="flex items-start justify-between gap-2">
-                    <p className="text-sm font-medium text-gray-900">{w.task_title}</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{w.task_title}</p>
                     <span className="text-xs text-gray-400 flex-shrink-0">{formatDate(w.created_at)}</span>
                   </div>
                   <p className="text-sm text-amber-800 mt-1">{w.message}</p>
                   {w.sent_by_name && (
-                    <p className="text-xs text-gray-500 mt-1">Sent by {w.sent_by_name}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('sentBy')} {w.sent_by_name}</p>
                   )}
                 </div>
               ))}
@@ -400,15 +402,15 @@ export default function Profile() {
 
       {/* Danger Zone */}
       <div className="card">
-        <h3 className="text-sm font-semibold text-gray-700 mb-3">Danger Zone</h3>
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">{t('dangerZone')}</h3>
         <button onClick={handleLogout} className="btn-danger w-full sm:w-auto">
           <LogOut size={18} className="mr-2" />
-          Logout
+          {t('logout')}
         </button>
       </div>
 
       {/* Edit Profile Modal */}
-      <Modal open={editModalOpen} onClose={() => setEditModalOpen(false)} title="Edit Profile">
+      <Modal open={editModalOpen} onClose={() => setEditModalOpen(false)} title={t('editProfile')}>
         <form onSubmit={handleEditSave} className="space-y-4">
           {editError && (
             <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
@@ -416,7 +418,7 @@ export default function Profile() {
             </div>
           )}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('name')}</label>
             <input
               type="text"
               value={editName}
@@ -427,16 +429,16 @@ export default function Profile() {
             />
           </div>
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={() => setEditModalOpen(false)} className="btn-secondary flex-1">Cancel</button>
+            <button type="button" onClick={() => setEditModalOpen(false)} className="btn-secondary flex-1">{t('cancel')}</button>
             <button type="submit" disabled={savingName} className="btn-primary flex-1">
-              {savingName ? 'Saving...' : 'Save Changes'}
+              {savingName ? t('saving') : t('saveChanges')}
             </button>
           </div>
         </form>
       </Modal>
 
       {/* Change Password Modal */}
-      <Modal open={pwModalOpen} onClose={() => setPwModalOpen(false)} title="Change Password">
+      <Modal open={pwModalOpen} onClose={() => setPwModalOpen(false)} title={t('changePassword')}>
         <form onSubmit={handlePwSave} className="space-y-4">
           {pwError && (
             <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
@@ -444,18 +446,18 @@ export default function Profile() {
             </div>
           )}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('currentPassword')}</label>
             <input
               type="password"
               value={pwForm.current_password}
               onChange={(e) => setPwForm({ ...pwForm, current_password: e.target.value })}
               className="input"
-              placeholder="Enter current password"
+              placeholder={t('enterCurrentPassword')}
               autoFocus
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('newPassword')}</label>
             <input
               type="password"
               value={pwForm.new_password}
@@ -465,19 +467,19 @@ export default function Profile() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('confirmNewPassword')}</label>
             <input
               type="password"
               value={pwForm.confirm_password}
               onChange={(e) => setPwForm({ ...pwForm, confirm_password: e.target.value })}
               className="input"
-              placeholder="Re-enter new password"
+              placeholder={t('reenterNewPassword')}
             />
           </div>
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={() => setPwModalOpen(false)} className="btn-secondary flex-1">Cancel</button>
+            <button type="button" onClick={() => setPwModalOpen(false)} className="btn-secondary flex-1">{t('cancel')}</button>
             <button type="submit" disabled={savingPw} className="btn-primary flex-1">
-              {savingPw ? 'Updating...' : 'Update Password'}
+              {savingPw ? t('updating') : t('updatePassword')}
             </button>
           </div>
         </form>

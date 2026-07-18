@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { useLang } from '../context/LanguageContext';
 import api from '../api/client';
 import { Bell, AlertTriangle, UserPlus, CheckSquare, CheckCheck, CheckCircle } from 'lucide-react';
 
@@ -11,14 +12,15 @@ const NOTIFICATION_ICONS = {
 };
 
 const NOTIFICATION_LABELS = {
-  warning: 'Warning',
-  assignment: 'Assignment',
-  task_added: 'New Task',
-  user_joined: 'New User',
-  task_completed: 'Task Completed',
+  warning: 'warningNotif',
+  assignment: 'assignment',
+  task_added: 'newTask',
+  user_joined: 'newUser',
+  task_completed: 'taskCompleted',
 };
 
 export default function Notifications() {
+  const { t } = useLang();
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -30,7 +32,7 @@ export default function Notifications() {
       setNotifications(res.data.notifications);
       setUnreadCount(res.data.unread_count);
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to load notifications');
+      setError(err.response?.data?.error || t('failedLoadNotifications'));
     } finally {
       setLoading(false);
     }
@@ -49,7 +51,7 @@ export default function Notifications() {
       setUnreadCount((prev) => Math.max(0, prev - 1));
       window.dispatchEvent(new Event('notifications-updated'));
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to mark as read');
+      setError(err.response?.data?.error || t('failedMarkRead'));
     }
   };
 
@@ -60,7 +62,7 @@ export default function Notifications() {
       setUnreadCount(0);
       window.dispatchEvent(new Event('notifications-updated'));
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to mark all as read');
+      setError(err.response?.data?.error || t('failedMarkAllRead'));
     }
   };
 
@@ -72,10 +74,10 @@ export default function Notifications() {
     const diffHr = Math.floor(diffMin / 60);
     const diffDay = Math.floor(diffHr / 24);
 
-    if (diffMin < 1) return 'Just now';
-    if (diffMin < 60) return `${diffMin}m ago`;
-    if (diffHr < 24) return `${diffHr}h ago`;
-    if (diffDay < 7) return `${diffDay}d ago`;
+    if (diffMin < 1) return t('justNow');
+    if (diffMin < 60) return `${diffMin}${t('minAgo')}`;
+    if (diffHr < 24) return `${diffHr}${t('hrAgo')}`;
+    if (diffDay < 7) return `${diffDay}${t('dayAgo')}`;
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
@@ -91,16 +93,16 @@ export default function Notifications() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold">Notifications</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('notifications')}</h1>
           {unreadCount > 0 && (
-            <span className="badge bg-red-100 text-red-700">{unreadCount} new</span>
+            <span className="badge bg-red-100 text-red-700">{unreadCount} {t('new')}</span>
           )}
         </div>
         {unreadCount > 0 && (
           <button onClick={markAllAsRead} className="btn-ghost text-sm">
             <CheckCheck size={16} className="mr-1" />
-            <span className="hidden sm:inline">Mark all read</span>
-            <span className="sm:hidden">Read all</span>
+            <span className="hidden sm:inline">{t('markAllRead')}</span>
+            <span className="sm:hidden">{t('readAll')}</span>
           </button>
         )}
       </div>
@@ -114,7 +116,7 @@ export default function Notifications() {
       {notifications.length === 0 ? (
         <div className="card text-center py-12">
           <Bell size={40} className="mx-auto text-gray-300 mb-3" />
-          <p className="text-gray-500">No notifications yet.</p>
+          <p className="text-gray-500 dark:text-gray-400">{t('noNotifications')}</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -126,7 +128,7 @@ export default function Notifications() {
               <div
                 key={notif.id}
                 className={`card flex items-start gap-3 cursor-pointer transition-colors ${
-                  !notif.is_read ? 'border-brand-200 bg-brand-50/30' : ''
+                  !notif.is_read ? 'border-brand-200 bg-brand-50/30 dark:border-brand-800 dark:bg-brand-900/10' : ''
                 }`}
                 onClick={() => !notif.is_read && markAsRead(notif.id)}
               >
@@ -135,11 +137,11 @@ export default function Notifications() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5">
-                    <span className="text-xs font-medium text-gray-500">{NOTIFICATION_LABELS[notif.type] || 'Notification'}</span>
-                    <span className="text-xs text-gray-400">·</span>
-                    <span className="text-xs text-gray-400">{formatTime(notif.created_at)}</span>
+                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400">{t(NOTIFICATION_LABELS[notif.type] || 'notification')}</span>
+                    <span className="text-xs text-gray-400 dark:text-gray-500">·</span>
+                    <span className="text-xs text-gray-400 dark:text-gray-500">{formatTime(notif.created_at)}</span>
                   </div>
-                  <p className={`text-sm ${notif.is_read ? 'text-gray-600' : 'text-gray-900 font-medium'}`}>
+                  <p className={`text-sm ${notif.is_read ? 'text-gray-600 dark:text-gray-400' : 'text-gray-900 dark:text-gray-100 font-medium'}`}>
                     {notif.message}
                   </p>
                 </div>
