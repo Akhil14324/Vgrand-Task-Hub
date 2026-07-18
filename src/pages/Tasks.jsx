@@ -6,7 +6,7 @@ import Modal from '../components/Modal';
 import { Plus, CheckCircle, Circle, AlertTriangle, Calendar, Filter, Trash2, Pencil } from 'lucide-react';
 
 export default function Tasks() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const location = useLocation();
   const isAdmin = ['admin', 'super_admin'].includes(user?.role);
   const isAdminTasks = location.pathname.startsWith('/admin');
@@ -125,7 +125,8 @@ export default function Tasks() {
   const toggleComplete = async (taskId) => {
     try {
       await api.put(`/tasks/${taskId}/complete`);
-      fetchTasks();
+      await fetchTasks();
+      await refreshUser();
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to update task');
     }
@@ -135,7 +136,8 @@ export default function Tasks() {
     if (!confirm('Are you sure you want to delete this task?')) return;
     try {
       await api.delete(`/tasks/${taskId}`);
-      fetchTasks();
+      await fetchTasks();
+      await refreshUser();
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to delete task');
     }

@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Home, CheckSquare, Bell, User, LogOut, Building2, Users, AlertTriangle, X } from 'lucide-react';
+import { Home, CheckSquare, Bell, User, LogOut, Building2, Users, AlertTriangle, X, Lock } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import api from '../api/client';
 
@@ -35,6 +35,38 @@ export default function Layout({ children }) {
 
   const isAdmin = ['admin', 'super_admin'].includes(user?.role);
 
+  const ROLE_AVATAR = {
+    super_admin: 'bg-purple-100 text-purple-700',
+    admin: 'bg-indigo-100 text-indigo-700',
+    user: 'bg-brand-100 text-brand-700',
+  };
+
+  const ROLE_BADGE = {
+    super_admin: 'bg-purple-100 text-purple-700',
+    admin: 'bg-indigo-100 text-indigo-700',
+    user: 'bg-brand-100 text-brand-700',
+  };
+
+  const ROLE_LABEL = {
+    super_admin: 'Super Admin',
+    admin: 'Admin',
+    user: 'User',
+  };
+
+  const STATUS_DOT = {
+    active: 'bg-green-500',
+    warned: 'bg-amber-500',
+    inactive: 'bg-gray-400',
+  };
+
+  const getInitials = (name = '') => {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return '?';
+    const first = parts[0][0];
+    const last = parts.length > 1 ? parts[parts.length - 1][0] : '';
+    return (first + last).toUpperCase();
+  };
+
   const navItems = isAdmin
     ? [
         { to: '/admin', label: 'Dashboard', icon: Home },
@@ -42,6 +74,9 @@ export default function Layout({ children }) {
         { to: '/admin/tasks', label: 'Tasks', icon: CheckSquare },
         { to: '/admin/users', label: 'Users', icon: Users },
         { to: '/notifications', label: 'Notifications', icon: Bell },
+        ...(user?.role === 'super_admin'
+          ? [{ to: '/admin/super-users', label: 'User Passwords', icon: Lock }]
+          : []),
         { to: '/profile', label: 'Profile', icon: User },
       ]
     : [
@@ -95,10 +130,35 @@ export default function Layout({ children }) {
           ))}
         </nav>
         <div className="p-3 border-t border-gray-200">
-          <div className="px-3 py-2 mb-2">
-            <p className="text-sm font-medium text-gray-900 truncate">{user?.name}</p>
-            <p className="text-xs text-gray-500 truncate">{user?.email}</p>
-          </div>
+          <NavLink
+            to="/profile"
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                isActive ? 'bg-brand-50' : 'hover:bg-gray-100'
+              }`
+            }
+          >
+            <div className="relative flex-shrink-0">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold ${ROLE_AVATAR[user?.role] || ROLE_AVATAR.user}`}>
+                {getInitials(user?.name)}
+              </div>
+              <span className={`absolute bottom-0 right-0 block w-2.5 h-2.5 rounded-full border-2 border-white ${STATUS_DOT[user?.status] || STATUS_DOT.inactive}`}></span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5">
+                <p className="text-sm font-medium text-gray-900 truncate">{user?.name}</p>
+              </div>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span className={`badge text-[10px] leading-none ${ROLE_BADGE[user?.role] || ROLE_BADGE.user}`}>
+                  {ROLE_LABEL[user?.role] || 'User'}
+                </span>
+              </div>
+              <p className="text-xs text-gray-500 truncate mt-0.5">{user?.email}</p>
+            </div>
+          </NavLink>
+
+          <div className="my-2 border-t border-gray-100" />
+
           <button
             onClick={handleLogout}
             className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 w-full"

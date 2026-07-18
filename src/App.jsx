@@ -10,6 +10,7 @@ import Tasks from './pages/Tasks';
 import Notifications from './pages/Notifications';
 import AdminBusinesses from './pages/AdminBusinesses';
 import AdminUsers from './pages/AdminUsers';
+import SuperAdminUsers from './pages/SuperAdminUsers';
 import Profile from './pages/Profile';
 
 function PublicRoute({ children }) {
@@ -55,6 +56,9 @@ function App() {
         } />
         <Route path="/admin/users" element={
           <ProtectedRoute adminOnly><Layout><AdminUsers /></Layout></ProtectedRoute>
+        } />
+        <Route path="/admin/super-users" element={
+          <ProtectedRoute superAdminOnly><Layout><SuperAdminUsers /></Layout></ProtectedRoute>
         } />
 
         {/* Shared routes */}

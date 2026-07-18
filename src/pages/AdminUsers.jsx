@@ -265,7 +265,7 @@ export default function AdminUsers() {
                   </div>
                   {isSuperAdmin && (
                     <div className="flex items-center justify-center gap-4 pt-2 mt-2 border-t border-gray-100">
-                      <button onClick={() => openRoleModal(user, 'demote')} className="flex flex-col items-center gap-0.5 text-xs text-gray-600 hover:text-brand-600 touch-target">
+                      <button onClick={() => openRoleModal(user, 'demote')} className="flex flex-col items-center gap-0.5 text-xs text-red-600 hover:text-red-700 touch-target">
                         <ArrowDownCircle size={16} />
                         <span>Demote</span>
                       </button>
@@ -306,20 +306,20 @@ export default function AdminUsers() {
                       </td>
                       <td className="px-4 py-3">{statusBadge(user.status)}</td>
                       <td className="px-4 py-3">
-                        <div className="flex items-center justify-center gap-2">
+                        <div className="flex items-center justify-center gap-3">
                           {isSuperAdmin && (
-                            <button onClick={() => openRoleModal(user, 'demote')} className="text-sm text-gray-600 font-medium hover:underline touch-target">
-                              <ArrowDownCircle size={14} className="inline mr-1" />
-                              Demote
+                            <button onClick={() => openRoleModal(user, 'demote')} className="flex flex-col items-center gap-0.5 text-xs text-red-600 hover:text-red-700 touch-target">
+                              <ArrowDownCircle size={16} />
+                              <span>Demote</span>
                             </button>
                           )}
                           {isSuperAdmin && (
                             <button
                               onClick={() => handleDeleteUser(user.id, user.name)}
-                              className="btn-ghost touch-target text-gray-500 hover:text-red-600 hover:bg-red-50"
-                              title="Delete Admin"
+                              className="flex flex-col items-center gap-0.5 text-xs text-gray-500 hover:text-red-600 touch-target"
                             >
                               <Trash2 size={16} />
+                              <span>Delete</span>
                             </button>
                           )}
                         </div>
@@ -377,7 +377,7 @@ export default function AdminUsers() {
                         <span>{user.business_id ? 'Reassign' : 'Assign'}</span>
                       </button>
                       {isSuperAdmin && (
-                        <button onClick={() => openRoleModal(user, 'promote')} className="flex flex-col items-center gap-0.5 text-xs text-purple-600 hover:text-purple-700 touch-target">
+                        <button onClick={() => openRoleModal(user, 'promote')} className="flex flex-col items-center gap-0.5 text-xs text-green-600 hover:text-green-700 touch-target">
                           <ArrowUpCircle size={16} />
                           <span>Promote</span>
                         </button>
@@ -421,7 +421,7 @@ export default function AdminUsers() {
                             <span>{user.business_id ? 'Reassign' : 'Assign'}</span>
                           </button>
                           {isSuperAdmin && (
-                            <button onClick={() => openRoleModal(user, 'promote')} className="flex flex-col items-center gap-0.5 text-xs text-purple-600 hover:text-purple-700 touch-target">
+                            <button onClick={() => openRoleModal(user, 'promote')} className="flex flex-col items-center gap-0.5 text-xs text-green-600 hover:text-green-700 touch-target">
                               <ArrowUpCircle size={16} />
                               <span>Promote</span>
                             </button>
