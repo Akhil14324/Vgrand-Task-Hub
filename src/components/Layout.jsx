@@ -214,7 +214,6 @@ export default function Layout({ children }) {
           >
             {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
           </button>
-          <span className="text-sm text-gray-500 dark:text-gray-400">{user?.name?.split(' ')[0]}</span>
         </div>
       </header>
 
