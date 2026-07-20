@@ -68,3 +68,17 @@
 .bottom-nav {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
+
+/* Slide-up animation for mobile more menu */
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.25s ease-out;
+}

@@ -14,6 +14,7 @@ export const translations = {
     alerts: 'Alerts',
     profile: 'Profile',
     userPasswords: 'User Passwords',
+    more: 'More',
     logout: 'Logout',
 
     // Roles
@@ -103,7 +104,7 @@ export const translations = {
     failedToggleHold: 'Failed to toggle hold status',
     assigned: 'Assigned',
     doneBy: 'Done by',
-    due: 'Due',
+    due: 'Due Date',
     createdBy: 'By',
     task: 'Task',
     assignedTo: 'Assigned To',
@@ -269,6 +270,7 @@ export const translations = {
     alerts: 'హెచ్చరికలు',
     profile: 'ప్రొఫైల్',
     userPasswords: 'యూజర్ పాస్‌వర్డ్‌లు',
+    more: 'మరిన్ని',
     logout: 'లాగౌట్',
 
     // Roles
@@ -358,7 +360,7 @@ export const translations = {
     failedToggleHold: 'హోల్డ్ స్టేటస్ మార్చడం విఫలమైంది',
     assigned: 'కేటాయించబడింది',
     doneBy: 'పూర్తి చేసినవారు',
-    due: 'గడువు',
+    due: 'గడువు తేదీ',
     createdBy: 'ద్వారా',
     task: 'పని',
     assignedTo: 'కేటాయించబడింది',

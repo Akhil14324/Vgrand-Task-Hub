@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useLang } from '../context/LanguageContext';
-import { Home, CheckSquare, Bell, User, LogOut, Building2, Users, AlertTriangle, X, Lock, Moon, Sun } from 'lucide-react';
+import { Home, CheckSquare, Bell, User, LogOut, Building2, Users, AlertTriangle, X, Lock, Moon, Sun, MoreHorizontal } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import api from '../api/client';
 
@@ -12,6 +12,7 @@ export default function Layout({ children }) {
   const { lang, toggleLang, t } = useLang();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
@@ -90,12 +91,20 @@ export default function Layout({ children }) {
         { to: '/profile', label: t('profile'), icon: User },
       ];
 
+  const adminMoreItems = [
+    { to: '/notifications', label: t('alerts'), icon: Bell },
+    { to: '/profile', label: t('profile'), icon: User },
+    ...(user?.role === 'super_admin'
+      ? [{ to: '/admin/super-users', label: t('userPasswords'), icon: Lock }]
+      : []),
+  ];
+
   const mobileNavItems = isAdmin
     ? [
         { to: '/admin', label: t('home'), icon: Home },
         { to: '/admin/tasks', label: t('tasks'), icon: CheckSquare },
-        { to: '/notifications', label: t('alerts'), icon: Bell },
-        { to: '/profile', label: t('profile'), icon: User },
+        { to: '/admin/businesses', label: t('businesses'), icon: Building2 },
+        { to: '/admin/users', label: t('users'), icon: Users },
       ]
     : [
         { to: '/dashboard', label: t('home'), icon: Home },
@@ -239,8 +248,72 @@ export default function Layout({ children }) {
               )}
             </NavLink>
           ))}
+          {isAdmin && (
+            <button
+              onClick={() => setMoreMenuOpen(true)}
+              className="flex flex-col items-center justify-center gap-0.5 flex-1 h-full touch-target text-gray-400 dark:text-gray-500"
+            >
+              <MoreHorizontal size={22} />
+              <span className="text-xs font-medium">{t('more')}</span>
+            </button>
+          )}
         </div>
       </nav>
+
+      {/* Mobile More Menu (slide-up panel) */}
+      {moreMenuOpen && (
+        <>
+          <div
+            className="lg:hidden fixed inset-0 bg-black/40 z-40"
+            onClick={() => setMoreMenuOpen(false)}
+          />
+          <div className="lg:hidden fixed bottom-0 inset-x-0 bg-white rounded-t-2xl z-50 dark:bg-gray-800 animate-slide-up">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+              <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t('more')}</span>
+              <button
+                onClick={() => setMoreMenuOpen(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="py-2">
+              {adminMoreItems.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.to === '/admin'}
+                  onClick={() => setMoreMenuOpen(false)}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors ${
+                      isActive
+                        ? 'text-brand-600 bg-brand-50 dark:bg-brand-900/30'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    }`
+                  }
+                >
+                  <item.icon size={20} />
+                  {item.label}
+                  {item.to === '/notifications' && unreadCount > 0 && (
+                    <span className="ml-auto badge bg-red-100 text-red-700">{unreadCount}</span>
+                  )}
+                </NavLink>
+              ))}
+              <div className="my-1 border-t border-gray-100 dark:border-gray-700" />
+              <button
+                onClick={() => {
+                  setMoreMenuOpen(false);
+                  handleLogout();
+                }}
+                className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 w-full"
+              >
+                <LogOut size={20} />
+                {t('logout')}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
