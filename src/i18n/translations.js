@@ -31,7 +31,6 @@ export const translations = {
     loginFailed: 'Login failed',
     dontHaveAccount: "Don't have an account?",
     signUp: 'Sign up',
-    demoAdmin: 'Demo admin: admin@taskhub.com / admin123',
 
     // Signup
     createAccount: 'Create Account',
@@ -287,7 +286,6 @@ export const translations = {
     loginFailed: 'లాగిన్ విఫలమైంది',
     dontHaveAccount: 'ఖాతా లేదా?',
     signUp: 'సైన్ అప్',
-    demoAdmin: 'డెమో అడ్మిన్: admin@taskhub.com / admin123',
 
     // Signup
     createAccount: 'ఖాతా సృష్టించండి',

@@ -114,9 +114,6 @@ export default function Login() {
           </p>
         </div>
 
-        <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-6">
-          {t('demoAdmin')}
-        </p>
       </div>
     </div>
   );
