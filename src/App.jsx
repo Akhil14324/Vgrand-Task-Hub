@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ChatProvider } from './context/ChatContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import Layout from './components/Layout';
 import Login from './pages/Login';
@@ -12,6 +13,7 @@ import AdminBusinesses from './pages/AdminBusinesses';
 import AdminUsers from './pages/AdminUsers';
 import SuperAdminUsers from './pages/SuperAdminUsers';
 import Profile from './pages/Profile';
+import Chat from './pages/Chat';
 
 function PublicRoute({ children }) {
   const { user, loading } = useAuth();
@@ -31,6 +33,7 @@ function PublicRoute({ children }) {
 function App() {
   return (
     <AuthProvider>
+      <ChatProvider>
       <Routes>
         {/* Public routes */}
         <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
@@ -68,11 +71,18 @@ function App() {
         <Route path="/profile" element={
           <ProtectedRoute><Layout><Profile /></Layout></ProtectedRoute>
         } />
+        <Route path="/chat" element={
+          <ProtectedRoute><Layout><Chat /></Layout></ProtectedRoute>
+        } />
+        <Route path="/chat/:conversationId" element={
+          <ProtectedRoute><Layout><Chat /></Layout></ProtectedRoute>
+        } />
 
         {/* Redirects */}
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
+      </ChatProvider>
     </AuthProvider>
   );
 }

@@ -2,14 +2,16 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useLang } from '../context/LanguageContext';
-import { Home, CheckSquare, Bell, User, LogOut, Building2, Users, AlertTriangle, X, Lock, Moon, Sun, MoreHorizontal } from 'lucide-react';
+import { Home, CheckSquare, Bell, User, LogOut, Building2, Users, AlertTriangle, X, Lock, Moon, Sun, MoreHorizontal, MessageCircle } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import api from '../api/client';
+import { useChat } from '../context/ChatContext';
 
 export default function Layout({ children }) {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { lang, toggleLang, t } = useLang();
+  const { totalUnread: chatUnread } = useChat();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
@@ -79,6 +81,7 @@ export default function Layout({ children }) {
         { to: '/admin/tasks', label: t('tasks'), icon: CheckSquare },
         { to: '/admin/users', label: t('users'), icon: Users },
         { to: '/notifications', label: t('notifications'), icon: Bell },
+        { to: '/chat', label: t('chat'), icon: MessageCircle },
         ...(user?.role === 'super_admin'
           ? [{ to: '/admin/super-users', label: t('userPasswords'), icon: Lock }]
           : []),
@@ -88,11 +91,13 @@ export default function Layout({ children }) {
         { to: '/dashboard', label: t('home'), icon: Home },
         { to: '/tasks', label: t('tasks'), icon: CheckSquare },
         { to: '/notifications', label: t('notifications'), icon: Bell },
+        { to: '/chat', label: t('chat'), icon: MessageCircle },
         { to: '/profile', label: t('profile'), icon: User },
       ];
 
   const adminMoreItems = [
     { to: '/notifications', label: t('alerts'), icon: Bell },
+    { to: '/chat', label: t('chat'), icon: MessageCircle },
     { to: '/profile', label: t('profile'), icon: User },
     ...(user?.role === 'super_admin'
       ? [{ to: '/admin/super-users', label: t('userPasswords'), icon: Lock }]
@@ -109,7 +114,7 @@ export default function Layout({ children }) {
     : [
         { to: '/dashboard', label: t('home'), icon: Home },
         { to: '/tasks', label: t('tasks'), icon: CheckSquare },
-        { to: '/notifications', label: t('alerts'), icon: Bell },
+        { to: '/chat', label: t('chat'), icon: MessageCircle },
         { to: '/profile', label: t('profile'), icon: User },
       ];
 
@@ -154,6 +159,9 @@ export default function Layout({ children }) {
               {item.label}
               {item.to === '/notifications' && unreadCount > 0 && (
                 <span className="ml-auto badge bg-red-100 text-red-700">{unreadCount}</span>
+              )}
+              {item.to === '/chat' && chatUnread > 0 && (
+                <span className="ml-auto badge bg-brand-100 text-brand-700">{chatUnread}</span>
               )}
             </NavLink>
           ))}
@@ -245,6 +253,11 @@ export default function Layout({ children }) {
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               )}
+              {item.to === '/chat' && chatUnread > 0 && (
+                <span className="absolute top-1 right-1/4 w-4 h-4 rounded-full bg-brand-500 text-white text-[10px] flex items-center justify-center font-bold">
+                  {chatUnread > 9 ? '9+' : chatUnread}
+                </span>
+              )}
             </NavLink>
           ))}
           {isAdmin && (
@@ -295,6 +308,9 @@ export default function Layout({ children }) {
                   {item.label}
                   {item.to === '/notifications' && unreadCount > 0 && (
                     <span className="ml-auto badge bg-red-100 text-red-700">{unreadCount}</span>
+                  )}
+                  {item.to === '/chat' && chatUnread > 0 && (
+                    <span className="ml-auto badge bg-brand-100 text-brand-700">{chatUnread}</span>
                   )}
                 </NavLink>
               ))}

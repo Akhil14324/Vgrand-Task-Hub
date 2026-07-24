@@ -60,7 +60,7 @@ export const translations = {
 
     // Tasks
     allBusinesses: 'All Businesses',
-    allStatus: 'All Status',
+    allStatus: 'All Tasks',
     noTasksYetTasks: 'No tasks yet. Click "Add Task" to create one.',
     taskTitle: 'Task title is required',
     selectBusiness: 'Please select a business',
@@ -252,6 +252,28 @@ export const translations = {
     enterNewTypeName: 'Please enter a new type name',
     passwordUpdatedFor: 'Password updated for {name}',
     unassigned: 'Unassigned',
+
+    // Chat
+    chat: 'Chat',
+    newConversation: 'New Conversation',
+    direct: 'Direct',
+    group: 'Group',
+    groupName: 'Group name',
+    searchUsers: 'Search users...',
+    startChat: 'Start Chat',
+    createGroup: 'Create Group',
+    noConversations: 'No conversations yet',
+    startAChat: 'Start a chat',
+    typeMessage: 'Type a message...',
+    noMessagesYet: 'No messages yet. Say hello!',
+    loadingOlder: 'Loading older messages...',
+    online: 'Online',
+    offline: 'Offline',
+    members: 'members',
+    selectConversation: 'Select a conversation to start chatting',
+    attachFile: 'Attach file',
+    messageDeleted: 'This message was deleted',
+    viewAttachment: 'View attachment',
   },
 
   te: {
@@ -315,7 +337,7 @@ export const translations = {
 
     // Tasks
     allBusinesses: 'అన్ని వ్యాపారాలు',
-    allStatus: 'అన్ని స్టేటస్',
+    allStatus: 'అన్ని పనులు',
     noTasksYetTasks: 'ఇంకా పనులు లేవు. "పని జోడించండి" క్లిక్ చేసి సృష్టించండి.',
     taskTitle: 'పని శీర్షిక అవసరం',
     selectBusiness: 'దయచేసి వ్యాపారం ఎంచుకండి',
@@ -507,5 +529,27 @@ export const translations = {
     enterNewTypeName: 'దయచేసి కొత్త రకం పేరు నమోదు చేయండి',
     passwordUpdatedFor: '{name} కోసం పాస్‌వర్డ్ నవీకరించబడింది',
     unassigned: 'కేటాయించబడలేదు',
+
+    // Chat
+    chat: 'ఛాట్',
+    newConversation: 'కొత్త సంభాషణ',
+    direct: 'డైరెక్ట్',
+    group: 'గ్రూప్',
+    groupName: 'గ్రూప్ పేరు',
+    searchUsers: 'యూజర్లను శోధించండి...',
+    startChat: 'ఛాట్ ప్రారంభించండి',
+    createGroup: 'గ్రూప్ సృష్టించండి',
+    noConversations: 'ఇంకా సంభాషణలు లేవు',
+    startAChat: 'ఛాట్ ప్రారంభించండి',
+    typeMessage: 'సందేశం టైప్ చేయండి...',
+    noMessagesYet: 'ఇంకా సందేశాలు లేవు. హలో అనండి!',
+    loadingOlder: 'పాత సందేశాలు లోడ్ అవుతున్నాయి...',
+    online: 'ఆన్‌లైన్',
+    offline: 'ఆఫ్‌లైన్',
+    members: 'సభ్యులు',
+    selectConversation: 'ఛాట్ ప్రారంభించడానికి సంభాషణ ఎంచుకండి',
+    attachFile: 'ఫైల్ జోడించండి',
+    messageDeleted: 'ఈ సందేశం తొలగించబడింది',
+    viewAttachment: 'అటాచ్‌మెంట్ చూడండి',
   },
 };

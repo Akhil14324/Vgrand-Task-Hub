@@ -17,8 +17,9 @@ export default function Tasks() {
   const [businesses, setBusinesses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [filterBusiness, setFilterBusiness] = useState('');
-  const [filterStatus, setFilterStatus] = useState('');
+  const queryParams = new URLSearchParams(location.search);
+  const [filterBusiness, setFilterBusiness] = useState(queryParams.get('business_id') || '');
+  const [filterStatus, setFilterStatus] = useState(queryParams.get('status') || '');
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [warnModalOpen, setWarnModalOpen] = useState(false);
   const [warnTask, setWarnTask] = useState(null);
@@ -41,7 +42,11 @@ export default function Tasks() {
       if (filterBusiness) params.business_id = filterBusiness;
       if (filterStatus) params.status = filterStatus;
       const res = await api.get('/tasks', { params });
-      setTasks(res.data.tasks);
+      let fetchedTasks = res.data.tasks;
+      if (filterStatus === 'warned') {
+        fetchedTasks = fetchedTasks.filter((task) => task.is_warned);
+      }
+      setTasks(fetchedTasks);
     } catch (err) {
       setError(err.response?.data?.error || t('failedLoadTasks'));
     } finally {
@@ -224,6 +229,15 @@ export default function Tasks() {
     return new Date(task.due_date) < new Date(new Date().toDateString());
   };
 
+  const getAgeClass = (task) => {
+    if (!task.created_at) return 'bg-white dark:bg-gray-800';
+    const hours = (Date.now() - new Date(task.created_at).getTime()) / 36e5;
+    if (hours < 24) return 'bg-white dark:bg-gray-800';
+    if (hours < 48) return 'bg-green-200 dark:bg-green-900/50';
+    if (hours < 72) return 'bg-orange-200 dark:bg-orange-900/50';
+    return 'bg-red-200 dark:bg-red-900/50';
+  };
+
   if (loading && tasks.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -272,20 +286,23 @@ export default function Tasks() {
           <option value="pending">{t('pending')}</option>
           <option value="completed">{t('completed')}</option>
           <option value="on_hold">{t('onHold')}</option>
+          <option value="warned">{t('warned')}</option>
         </select>
       </div>
 
       {tasks.length === 0 ? (
-        <div className="card text-center py-12">
-          <Circle size={40} className="mx-auto text-gray-300 mb-3" />
-          <p className="text-gray-500 dark:text-gray-400">{t('noTasksYetTasks')}</p>
-        </div>
+        !filterStatus && !filterBusiness ? (
+          <div className="card text-center py-12">
+            <Circle size={40} className="mx-auto text-gray-300 mb-3" />
+            <p className="text-gray-500 dark:text-gray-400">{t('noTasksYetTasks')}</p>
+          </div>
+        ) : null
       ) : (
         <>
           {/* Mobile: Card layout */}
           <div className="grid gap-3 lg:hidden">
             {tasks.map((task) => (
-              <div key={task.id} className={`card ${task.is_warned ? 'border-yellow-300' : ''}`}>
+              <div key={task.id} className={`card ${getAgeClass(task)} ${task.is_warned ? 'border-yellow-300' : ''}`}>
                 <div className="flex items-start gap-3">
                   <button
                     onClick={() => toggleComplete(task.id)}
@@ -302,7 +319,7 @@ export default function Tasks() {
                       {task.title}
                     </h3>
                     {task.description && (
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{task.description}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 break-words">{task.description}</p>
                     )}
                     <div className="flex flex-wrap items-center gap-2 mt-2">
                       {isAdminTasks && task.business_name && (
@@ -411,7 +428,7 @@ export default function Tasks() {
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {tasks.map((task) => (
-                  <tr key={task.id} className={`hover:bg-gray-50 dark:hover:bg-gray-700/50 ${task.is_warned ? 'bg-yellow-50 dark:bg-yellow-900/10' : ''}`}>
+                  <tr key={task.id} className={getAgeClass(task)}>
                     <td className="px-4 py-3">
                       <button
                         onClick={() => toggleComplete(task.id)}
@@ -429,7 +446,7 @@ export default function Tasks() {
                         {task.title}
                       </div>
                       {task.description && (
-                        <div className="text-sm text-gray-500 dark:text-gray-400 line-clamp-1">{task.description}</div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400 break-words">{task.description}</div>
                       )}
                       {task.is_warned && !task.warning_message && (
                         <span className="badge bg-red-100 text-red-700 mt-1">

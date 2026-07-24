@@ -55,13 +55,13 @@ export default function AdminDashboard() {
   const completionRate = totalTasks > 0 ? Math.round((totalCompleted / totalTasks) * 100) : 0;
 
   const stats = [
-    { label: t('businesses'), value: businesses.length, icon: Building2, color: 'text-brand-600', bg: 'bg-brand-50 dark:bg-brand-900/20' },
-    { label: t('totalTasks'), value: totalTasks, icon: TrendingUp, color: 'text-gray-700 dark:text-gray-300', bg: 'bg-gray-100 dark:bg-gray-700' },
-    { label: t('completed'), value: totalCompleted, icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-50 dark:bg-green-900/20' },
-    { label: t('pending'), value: totalPending, icon: Clock, color: 'text-yellow-600', bg: 'bg-yellow-50 dark:bg-yellow-900/20' },
-    { label: t('onHold'), value: totalOnHold, icon: PauseCircle, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20' },
-    { label: t('warned'), value: totalWarned, icon: AlertTriangle, color: 'text-red-600', bg: 'bg-red-50 dark:bg-red-900/20' },
-    { label: t('unassignedUsers'), value: unassignedCount, icon: Users, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-900/20' },
+    { label: t('businesses'), value: businesses.length, icon: Building2, color: 'text-brand-600', bg: 'bg-brand-50 dark:bg-brand-900/20', to: '/admin/businesses' },
+    { label: t('totalTasks'), value: totalTasks, icon: TrendingUp, color: 'text-gray-700 dark:text-gray-300', bg: 'bg-gray-100 dark:bg-gray-700', to: '/admin/tasks' },
+    { label: t('completed'), value: totalCompleted, icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-50 dark:bg-green-900/20', to: '/admin/tasks?status=completed' },
+    { label: t('pending'), value: totalPending, icon: Clock, color: 'text-yellow-600', bg: 'bg-yellow-50 dark:bg-yellow-900/20', to: '/admin/tasks?status=pending' },
+    { label: t('onHold'), value: totalOnHold, icon: PauseCircle, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20', to: '/admin/tasks?status=on_hold' },
+    { label: t('warned'), value: totalWarned, icon: AlertTriangle, color: 'text-red-600', bg: 'bg-red-50 dark:bg-red-900/20', to: '/admin/tasks?status=warned' },
+    { label: t('unassignedUsers'), value: unassignedCount, icon: Users, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-900/20', to: '/admin/users' },
   ];
 
   return (
@@ -77,13 +77,13 @@ export default function AdminDashboard() {
       {/* Stats Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 mb-8">
         {stats.map((stat) => (
-          <div key={stat.label} className="card">
+          <Link key={stat.label} to={stat.to} className="card block hover:shadow-md transition-shadow">
             <div className={`w-10 h-10 rounded-lg ${stat.bg} flex items-center justify-center mb-2`}>
               <stat.icon size={20} className={stat.color} />
             </div>
             <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stat.value}</p>
             <p className="text-xs text-gray-500 dark:text-gray-400">{stat.label}</p>
-          </div>
+          </Link>
         ))}
       </div>
 

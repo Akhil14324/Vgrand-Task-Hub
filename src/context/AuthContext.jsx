@@ -11,14 +11,20 @@ export function AuthProvider({ children }) {
     const token = sessionStorage.getItem('token');
     if (!token) {
       setLoading(false);
+      setUser(null);
       return;
     }
     try {
       const res = await api.get('/auth/me');
       setUser(res.data.user);
-    } catch {
-      sessionStorage.removeItem('token');
-      sessionStorage.removeItem('user');
+    } catch (err) {
+      if (err.response?.status === 401) {
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('user');
+        setUser(null);
+      } else {
+        console.error('[auth] fetchMe error:', err.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -27,6 +33,16 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     fetchMe();
   }, [fetchMe]);
+
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('user');
+      setUser(null);
+    };
+    window.addEventListener('auth:unauthorized', handleUnauthorized);
+    return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
+  }, []);
 
   const login = (token, userData) => {
     sessionStorage.setItem('token', token);
