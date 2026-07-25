@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
 import { Image, Send, Paperclip } from 'lucide-react';
+import { useLang } from '../../context/LanguageContext';
 
 export default function MessageInput({ onSend, onTypingStart, onTypingStop, disabled }) {
+  const { t } = useLang();
   const [text, setText] = useState('');
   const [uploading, setUploading] = useState(false);
   const typingTimerRef = useRef(null);
@@ -74,7 +76,7 @@ export default function MessageInput({ onSend, onTypingStart, onTypingStop, disa
           onClick={() => fileInputRef.current?.click()}
           disabled={disabled || uploading}
           className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 disabled:opacity-50"
-          title="Attach file"
+          title={t('attachFile')}
         >
           <Paperclip size={20} />
         </button>
@@ -83,7 +85,7 @@ export default function MessageInput({ onSend, onTypingStart, onTypingStop, disa
           onChange={handleTextChange}
           onKeyDown={handleKeyDown}
           disabled={disabled}
-          placeholder="Type a message..."
+          placeholder={t('typeMessagePlaceholder')}
           rows={1}
           className="flex-1 resize-none rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 max-h-32"
           style={{ minHeight: '40px' }}
@@ -92,7 +94,7 @@ export default function MessageInput({ onSend, onTypingStart, onTypingStop, disa
           onClick={handleSend}
           disabled={disabled || (!text.trim() && !uploading)}
           className="p-2 rounded-xl bg-brand-600 text-white hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          title="Send"
+          title={t('send')}
         >
           <Send size={20} />
         </button>

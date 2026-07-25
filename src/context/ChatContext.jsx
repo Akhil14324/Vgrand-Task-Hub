@@ -307,7 +307,8 @@ export function ChatProvider({ children }) {
       );
     }
     await api.delete(`/chat/messages/${messageId}`, { params: { scope } });
-  }, []);
+    fetchConversations();
+  }, [fetchConversations]);
 
   const deleteConversation = useCallback(async (conversationId) => {
     await api.delete(`/chat/conversations/${conversationId}`);

@@ -40,9 +40,9 @@ function getInitials(name) {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-function formatDate(dateStr) {
+function formatDate(dateStr, lang) {
   if (!dateStr) return '—';
-  return new Date(dateStr).toLocaleDateString('en-US', {
+  return new Date(dateStr).toLocaleDateString(lang === 'te' ? 'te-IN' : 'en-US', {
     month: 'long', day: 'numeric', year: 'numeric',
   });
 }
@@ -77,7 +77,7 @@ function SkeletonStats() {
 
 export default function Profile() {
   const { user, logout, refreshUser } = useAuth();
-  const { t } = useLang();
+  const { t, lang, translateDynamic, getDynamic } = useLang();
   const navigate = useNavigate();
   const isAdmin = ['admin', 'super_admin'].includes(user?.role);
 
@@ -112,6 +112,24 @@ export default function Profile() {
     };
     fetchAll();
   }, []);
+
+  // Translate dynamic content when in Telugu
+  useEffect(() => {
+    if (lang !== 'te') return;
+    const texts = [];
+    if (user?.name) texts.push(user.name);
+    if (user?.business_name) texts.push(user.business_name);
+    businesses.forEach((biz) => {
+      if (biz.name) texts.push(biz.name);
+    });
+    warnings.forEach((w) => {
+      if (w.task_title) texts.push(w.task_title);
+      if (w.message) texts.push(w.message);
+      if (w.sent_by_name) texts.push(w.sent_by_name);
+    });
+    const unique = [...new Set(texts)];
+    if (unique.length > 0) translateDynamic(unique);
+  }, [user, businesses, warnings, lang, translateDynamic]);
 
   const handleLogout = () => {
     logout();
@@ -189,6 +207,7 @@ export default function Profile() {
   const roleBadgeClass = ROLE_BADGE[user?.role] || ROLE_BADGE.user;
   const roleLabel = t(ROLE_LABEL[user?.role] || 'user');
   const statusBadgeClass = STATUS_BADGE[user?.status] || STATUS_BADGE.active;
+  const statusText = t(user?.status === 'warned' ? 'warned' : user?.status === 'inactive' ? 'inactive' : 'active');
 
   const userStats = [
     { label: t('tasksCompleted'), value: stats?.tasks_completed ?? 0, icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-50 dark:bg-green-900/20' },
@@ -226,9 +245,9 @@ export default function Profile() {
             <span className="text-2xl font-bold">{getInitials(user?.name)}</span>
           </div>
           <div className="flex-1 text-center sm:text-left">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">{user?.name}</h2>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">{getDynamic(user?.name)}</h2>
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-2">
-              <span className={`badge ${roleBadgeClass} flex items-center gap-1`} title={`${roleLabel} account`}>
+              <span className={`badge ${roleBadgeClass} flex items-center gap-1`} title={`${roleLabel} ${t('account')}`}>
                 {user?.role === 'super_admin' ? (
                   <ShieldAlert size={12} />
                 ) : user?.role === 'admin' ? (
@@ -241,23 +260,23 @@ export default function Profile() {
               {user?.status === 'warned' ? (
                 <button
                   type="button"
-                  className={`badge ${statusBadgeClass} flex items-center gap-1 capitalize hover:opacity-80 cursor-pointer`}
-                  title="Click to view your warnings"
+                  className={`badge ${statusBadgeClass} flex items-center gap-1 hover:opacity-80 cursor-pointer`}
+                  title={t('clickToViewWarnings')}
                   onClick={() => document.getElementById('warnings-history')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
                 >
                   <span className="relative flex items-center justify-center">
                     <span className="absolute inline-flex h-2 w-2 rounded-full bg-amber-400 animate-ping opacity-75"></span>
                     <AlertTriangle size={12} className="relative" />
                   </span>
-                  {user?.status}
+                  {statusText}
                 </button>
               ) : (
                 <span
-                  className={`badge ${statusBadgeClass} capitalize flex items-center gap-1 ${user?.status === 'inactive' ? 'opacity-75' : ''}`}
-                  title={user?.status === 'inactive' ? 'Account is currently inactive' : 'Account is in good standing'}
+                  className={`badge ${statusBadgeClass} flex items-center gap-1 ${user?.status === 'inactive' ? 'opacity-75' : ''}`}
+                  title={t(user?.status === 'inactive' ? 'accountInactive' : 'accountInGoodStanding')}
                 >
                   <span className={`w-1.5 h-1.5 rounded-full ${user?.status === 'inactive' ? 'bg-gray-400' : 'bg-green-500'}`}></span>
-                  {user?.status || 'active'}
+                  {statusText}
                 </span>
               )}
             </div>
@@ -300,7 +319,7 @@ export default function Profile() {
             {businesses.map((biz) => (
               <span key={biz.id} className="badge bg-brand-100 text-brand-700">
                 <Building2 size={12} className="mr-1" />
-                {biz.name}
+                {getDynamic(biz.name)}
               </span>
             ))}
           </div>
@@ -326,7 +345,7 @@ export default function Profile() {
             </div>
             <div className="min-w-0">
               <p className="text-xs text-gray-400">{t('memberSince')}</p>
-              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{formatDate(user?.created_at)}</p>
+              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{formatDate(user?.created_at, lang)}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -344,7 +363,7 @@ export default function Profile() {
             </div>
             <div className="min-w-0">
               <p className="text-xs text-gray-400">{t('statusLabel')}</p>
-              <p className="text-sm font-medium text-gray-900 dark:text-gray-100 capitalize">{user?.status || 'active'}</p>
+              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{statusText}</p>
             </div>
           </div>
         </div>
@@ -386,12 +405,12 @@ export default function Profile() {
               {warnings.map((w) => (
                 <div key={w.id} className="rounded-lg bg-amber-50 border border-amber-200 px-4 py-3">
                   <div className="flex items-start justify-between gap-2">
-                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{w.task_title}</p>
-                    <span className="text-xs text-gray-400 flex-shrink-0">{formatDate(w.created_at)}</span>
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{getDynamic(w.task_title)}</p>
+                    <span className="text-xs text-gray-400 flex-shrink-0">{formatDate(w.created_at, lang)}</span>
                   </div>
-                  <p className="text-sm text-amber-800 mt-1">{w.message}</p>
+                  <p className="text-sm text-amber-800 mt-1">{getDynamic(w.message)}</p>
                   {w.sent_by_name && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('sentBy')} {w.sent_by_name}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('sentBy')} {getDynamic(w.sent_by_name)}</p>
                   )}
                 </div>
               ))}
@@ -424,7 +443,7 @@ export default function Profile() {
               value={editName}
               onChange={(e) => setEditName(e.target.value)}
               className="input"
-              placeholder="Your name"
+              placeholder={t('namePlaceholder')}
               autoFocus
             />
           </div>
@@ -463,7 +482,7 @@ export default function Profile() {
               value={pwForm.new_password}
               onChange={(e) => setPwForm({ ...pwForm, new_password: e.target.value })}
               className="input"
-              placeholder="At least 6 characters"
+              placeholder={t('passwordMinLengthPlaceholder')}
             />
           </div>
           <div>

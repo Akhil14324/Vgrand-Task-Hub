@@ -12,10 +12,15 @@ const DEFAULT_TYPE_LABELS = {
   it: 'it',
 };
 
-const getTypeLabel = (type, t) => t(DEFAULT_TYPE_LABELS[type] || type.replace(/_/g, ' '));
+const getTypeLabel = (type, t, getDynamic) => {
+  const label = DEFAULT_TYPE_LABELS[type];
+  if (label) return t(label);
+  const custom = type.replace(/_/g, ' ');
+  return getDynamic(custom);
+};
 
 export default function AdminDashboard() {
-  const { t } = useLang();
+  const { t, lang, translateDynamic, getDynamic } = useLang();
   const [businesses, setBusinesses] = useState([]);
   const [unassignedCount, setUnassignedCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -38,6 +43,19 @@ export default function AdminDashboard() {
     };
     fetchData();
   }, []);
+
+  // Translate business names and custom types when in Telugu
+  useEffect(() => {
+    if (lang !== 'te' || businesses.length === 0) return;
+    const texts = [];
+    businesses.forEach((biz) => {
+      if (biz.name) texts.push(biz.name);
+      const custom = DEFAULT_TYPE_LABELS[biz.type] ? null : biz.type.replace(/_/g, ' ');
+      if (custom) texts.push(custom);
+    });
+    const unique = [...new Set(texts)];
+    if (unique.length > 0) translateDynamic(unique);
+  }, [businesses, lang, translateDynamic]);
 
   if (loading) {
     return (
@@ -133,8 +151,8 @@ export default function AdminDashboard() {
                 <Link key={biz.id} to={`/admin/tasks?business_id=${biz.id}`} className="card hover:shadow-md transition-shadow">
                   <div className="flex items-start justify-between mb-3">
                     <div>
-                      <h3 className="font-semibold text-gray-900 dark:text-gray-100">{biz.name}</h3>
-                      <span className="badge bg-brand-100 text-brand-700 mt-1">{getTypeLabel(biz.type, t)}</span>
+                      <h3 className="font-semibold text-gray-900 dark:text-gray-100">{getDynamic(biz.name)}</h3>
+                      <span className="badge bg-brand-100 text-brand-700 mt-1">{getTypeLabel(biz.type, t, getDynamic)}</span>
                     </div>
                     {parseInt(biz.warned_count) > 0 && (
                       <span className="badge bg-red-100 text-red-700">
@@ -192,9 +210,9 @@ export default function AdminDashboard() {
                     <tr key={biz.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                       <td className="px-4 py-3">
                         <Link to={`/admin/tasks?business_id=${biz.id}`} className="font-medium text-gray-900 dark:text-gray-100 hover:text-brand-600">
-                          {biz.name}
+                          {getDynamic(biz.name)}
                         </Link>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">{getTypeLabel(biz.type, t)}</div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">{getTypeLabel(biz.type, t, getDynamic)}</div>
                       </td>
                       <td className="text-center px-4 py-3 font-medium">{biz.task_count}</td>
                       <td className="text-center px-4 py-3"><span className="text-green-600 font-medium">{biz.completed_count}</span></td>

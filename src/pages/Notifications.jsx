@@ -20,7 +20,7 @@ const NOTIFICATION_LABELS = {
 };
 
 export default function Notifications() {
-  const { t } = useLang();
+  const { t, lang, translateDynamic, getDynamic } = useLang();
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -41,6 +41,14 @@ export default function Notifications() {
   useEffect(() => {
     fetchNotifications();
   }, [fetchNotifications]);
+
+  // Translate notification messages when in Telugu
+  useEffect(() => {
+    if (lang !== 'te' || notifications.length === 0) return;
+    const texts = notifications.map((n) => n.message).filter(Boolean);
+    const unique = [...new Set(texts)];
+    if (unique.length > 0) translateDynamic(unique);
+  }, [notifications, lang, translateDynamic]);
 
   const markAsRead = async (id) => {
     try {
@@ -78,7 +86,7 @@ export default function Notifications() {
     if (diffMin < 60) return `${diffMin}${t('minAgo')}`;
     if (diffHr < 24) return `${diffHr}${t('hrAgo')}`;
     if (diffDay < 7) return `${diffDay}${t('dayAgo')}`;
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return d.toLocaleDateString(lang === 'te' ? 'te-IN' : 'en-US', { month: 'short', day: 'numeric' });
   };
 
   if (loading) {
@@ -142,7 +150,7 @@ export default function Notifications() {
                     <span className="text-xs text-gray-400 dark:text-gray-500">{formatTime(notif.created_at)}</span>
                   </div>
                   <p className={`text-sm ${notif.is_read ? 'text-gray-600 dark:text-gray-400' : 'text-gray-900 dark:text-gray-100 font-medium'}`}>
-                    {notif.message}
+                    {getDynamic(notif.message)}
                   </p>
                 </div>
                 {!notif.is_read && (

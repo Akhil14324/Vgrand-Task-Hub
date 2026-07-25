@@ -1,5 +1,6 @@
 import ConversationListItem from './ConversationListItem';
 import { MessageSquare, Plus } from 'lucide-react';
+import { useLang } from '../../context/LanguageContext';
 
 export default function ConversationList({
   conversations,
@@ -10,17 +11,18 @@ export default function ConversationList({
   onNewConversation,
   onDelete,
 }) {
+  const { t } = useLang();
   if (conversations.length === 0) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
         <MessageSquare size={40} className="text-gray-300 dark:text-gray-600 mb-3" />
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">No conversations yet</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{t('noConversations')}</p>
         <button
           onClick={onNewConversation}
           className="flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 transition-colors"
         >
           <Plus size={18} />
-          Start a chat
+          {t('startAChat')}
         </button>
       </div>
     );
@@ -29,11 +31,11 @@ export default function ConversationList({
   return (
     <div className="flex-1 flex flex-col h-full">
       <div className="flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-700">
-        <h2 className="font-semibold text-gray-900 dark:text-gray-100">Chats</h2>
+        <h2 className="font-semibold text-gray-900 dark:text-gray-100">{t('chat')}</h2>
         <button
           onClick={onNewConversation}
           className="p-1.5 rounded-lg text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-colors"
-          title="New conversation"
+          title={t('newConversation')}
         >
           <Plus size={20} />
         </button>

@@ -7,7 +7,7 @@ import { UserPlus, Users as UsersIcon, Building2, Mail, Shield, ArrowUpCircle, A
 
 export default function AdminUsers() {
   const { user: currentUser } = useAuth();
-  const { t } = useLang();
+  const { t, lang, translateDynamic, getDynamic } = useLang();
   const isSuperAdmin = currentUser?.role === 'super_admin';
   const [unassigned, setUnassigned] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
@@ -46,6 +46,17 @@ export default function AdminUsers() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  // Translate user names and business names when in Telugu
+  useEffect(() => {
+    if (lang !== 'te') return;
+    const texts = [];
+    unassigned.forEach((u) => { if (u.name) texts.push(u.name); });
+    allUsers.forEach((u) => { if (u.name) texts.push(u.name); });
+    businesses.forEach((b) => { if (b.name) texts.push(b.name); });
+    const unique = [...new Set(texts)];
+    if (unique.length > 0) translateDynamic(unique);
+  }, [unassigned, allUsers, businesses, lang, translateDynamic]);
 
   const openAssignModal = (user) => {
     setSelectedUser(user);
@@ -122,8 +133,11 @@ export default function AdminUsers() {
       warned: 'bg-yellow-100 text-yellow-700',
       inactive: 'bg-red-100 text-red-700',
     };
-    return <span className={`badge ${colors[status] || colors.active}`}>{status}</span>;
+    const statusLabel = t(status === 'warned' ? 'warned' : status === 'inactive' ? 'inactive' : 'active');
+    return <span className={`badge ${colors[status] || colors.active}`}>{statusLabel}</span>;
   };
+
+  const roleLabel = (role) => t(role === 'super_admin' ? 'superAdmin' : role === 'admin' ? 'admin' : 'user');
 
   const adminUsers = allUsers.filter((u) => u.role === 'admin');
   const regularUsers = allUsers.filter((u) => u.role === 'user');
@@ -169,7 +183,7 @@ export default function AdminUsers() {
                 <div key={user.id} className="card">
                   <div className="flex items-start justify-between mb-3">
                     <div>
-                      <p className="font-medium text-gray-900 dark:text-gray-100">{user.name}</p>
+                      <p className="font-medium text-gray-900 dark:text-gray-100">{getDynamic(user.name)}</p>
                       <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
                     </div>
                     {statusBadge(user.status)}
@@ -205,7 +219,7 @@ export default function AdminUsers() {
                 <tbody className="divide-y divide-gray-200">
                   {unassigned.map((user) => (
                     <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                      <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{user.name}</td>
+                      <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{getDynamic(user.name)}</td>
                       <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{user.email}</td>
                       <td className="px-4 py-3">{statusBadge(user.status)}</td>
                       <td className="px-4 py-3">
@@ -255,12 +269,12 @@ export default function AdminUsers() {
                 <div key={user.id} className="card">
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900 dark:text-gray-100 truncate">{user.name}</p>
+                      <p className="font-medium text-gray-900 dark:text-gray-100 truncate">{getDynamic(user.name)}</p>
                       <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
                     </div>
                     <div className="flex flex-col items-end gap-1 ml-2">
                       <span className={`badge ${roleBadgeClass(user.role)}`}>
-                        {user.role}
+                        {roleLabel(user.role)}
                       </span>
                       {statusBadge(user.status)}
                     </div>
@@ -299,11 +313,11 @@ export default function AdminUsers() {
                 <tbody className="divide-y divide-gray-200">
                   {adminUsers.map((user) => (
                     <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                      <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{user.name}</td>
+                      <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{getDynamic(user.name)}</td>
                       <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{user.email}</td>
                       <td className="px-4 py-3">
                         <span className={`badge ${roleBadgeClass(user.role)}`}>
-                          {user.role}
+                          {roleLabel(user.role)}
                         </span>
                       </td>
                       <td className="px-4 py-3">{statusBadge(user.status)}</td>
@@ -358,12 +372,12 @@ export default function AdminUsers() {
                 <div key={user.id} className="card">
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900 dark:text-gray-100 truncate">{user.name}</p>
+                      <p className="font-medium text-gray-900 dark:text-gray-100 truncate">{getDynamic(user.name)}</p>
                       <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
                     </div>
                     <div className="flex flex-col items-end gap-1 ml-2">
                       <span className={`badge ${roleBadgeClass(user.role)}`}>
-                        {user.role}
+                        {roleLabel(user.role)}
                       </span>
                       {statusBadge(user.status)}
                     </div>
@@ -371,7 +385,7 @@ export default function AdminUsers() {
                   <div className="mt-2">
                     <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 mb-3">
                       <Building2 size={14} className="text-gray-400 flex-shrink-0" />
-                      <span className="truncate">{user.businesses?.map((b) => b.name).join(', ') || t('unassigned')}</span>
+                      <span className="truncate">{user.businesses?.map((b) => getDynamic(b.name)).join(', ') || t('unassigned')}</span>
                     </div>
                     <div className="flex items-center justify-center gap-4 pt-2 border-t border-gray-100 dark:border-gray-700">
                       <button onClick={() => openAssignModal(user)} className="flex flex-col items-center gap-0.5 text-xs text-gray-600 hover:text-brand-600 touch-target">
@@ -412,9 +426,9 @@ export default function AdminUsers() {
                 <tbody className="divide-y divide-gray-200">
                   {regularUsers.map((user) => (
                     <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                      <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{user.name}</td>
+                      <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{getDynamic(user.name)}</td>
                       <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{user.email}</td>
-                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{user.businesses?.map((b) => b.name).join(', ') || <span className="text-gray-400 italic">{t('unassigned')}</span>}</td>
+                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{user.businesses?.map((b) => getDynamic(b.name)).join(', ') || <span className="text-gray-400 italic">{t('unassigned')}</span>}</td>
                       <td className="px-4 py-3">{statusBadge(user.status)}</td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-center gap-3">
@@ -456,7 +470,7 @@ export default function AdminUsers() {
           )}
           {selectedUser && (
             <div className="rounded-lg bg-gray-50 px-4 py-3 mb-2 dark:bg-gray-700">
-              <p className="font-medium text-gray-900 dark:text-gray-100">{selectedUser.name}</p>
+              <p className="font-medium text-gray-900 dark:text-gray-100">{getDynamic(selectedUser.name)}</p>
               <p className="text-sm text-gray-500 dark:text-gray-400">{selectedUser.email}</p>
             </div>
           )}
@@ -471,7 +485,7 @@ export default function AdminUsers() {
                     onChange={() => toggleBusinessSelection(biz.id)}
                     className="rounded border-gray-300 text-brand-600 focus:ring-brand-500"
                   />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">{biz.name}</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">{getDynamic(biz.name)}</span>
                 </label>
               ))}
             </div>
@@ -504,10 +518,10 @@ export default function AdminUsers() {
           )}
           {roleModalUser && (
             <div className="rounded-lg bg-gray-50 px-4 py-3 mb-2 dark:bg-gray-700">
-              <p className="font-medium text-gray-900 dark:text-gray-100">{roleModalUser.name}</p>
+              <p className="font-medium text-gray-900 dark:text-gray-100">{getDynamic(roleModalUser.name)}</p>
               <p className="text-sm text-gray-500 dark:text-gray-400">{roleModalUser.email}</p>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                {t('currentRole')}: <span className="font-medium">{roleModalUser.role}</span>
+                {t('currentRole')}: <span className="font-medium">{roleLabel(roleModalUser.role)}</span>
               </p>
             </div>
           )}

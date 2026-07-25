@@ -9,7 +9,7 @@ import { Eye, EyeOff, Moon, Sun } from 'lucide-react';
 export default function Signup() {
   const { login } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const { lang, toggleLang, t } = useLang();
+  const { lang, toggleLang, t, translating } = useLang();
   const navigate = useNavigate();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -53,9 +53,14 @@ export default function Signup() {
       <div className="absolute top-4 right-4 flex items-center gap-2">
         <button
           onClick={toggleLang}
-          className="text-xs font-medium px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+          className="text-xs font-medium px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors relative"
+          disabled={translating}
         >
-          {lang === 'en' ? 'EN' : 'TE'}
+          {translating ? (
+            <span className="inline-block w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+          ) : (
+            lang === 'en' ? 'EN' : 'TE'
+          )}
         </button>
         <button
           onClick={toggleTheme}
@@ -87,7 +92,7 @@ export default function Signup() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="input"
-                placeholder="John Doe"
+                placeholder={t('namePlaceholder')}
                 autoComplete="name"
               />
             </div>
@@ -99,7 +104,7 @@ export default function Signup() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="input"
-                placeholder="you@example.com"
+                placeholder={t('emailPlaceholder')}
                 autoComplete="email"
               />
             </div>
@@ -112,7 +117,7 @@ export default function Signup() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="input pr-12"
-                  placeholder="At least 6 characters"
+                  placeholder={t('passwordMinLengthPlaceholder')}
                   autoComplete="new-password"
                 />
                 <button
@@ -132,7 +137,7 @@ export default function Signup() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 className="input"
-                placeholder="••••••••"
+                placeholder={t('passwordPlaceholder')}
                 autoComplete="new-password"
               />
             </div>

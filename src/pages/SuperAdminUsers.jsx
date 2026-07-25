@@ -7,7 +7,7 @@ import { Shield, Users as UsersIcon, Lock, Key } from 'lucide-react';
 
 export default function SuperAdminUsers() {
   const { user: currentUser } = useAuth();
-  const { t } = useLang();
+  const { t, lang, translateDynamic, getDynamic } = useLang();
   const [allUsers, setAllUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -35,6 +35,14 @@ export default function SuperAdminUsers() {
     fetchUsers();
   }, []);
 
+  // Translate user names when in Telugu
+  useEffect(() => {
+    if (lang !== 'te' || allUsers.length === 0) return;
+    const texts = allUsers.map((u) => u.name).filter(Boolean);
+    const unique = [...new Set(texts)];
+    if (unique.length > 0) translateDynamic(unique);
+  }, [allUsers, lang, translateDynamic]);
+
   const openPwModal = (user) => {
     setSelectedUser(user);
     setNewPassword('');
@@ -53,7 +61,7 @@ export default function SuperAdminUsers() {
     setSavingPw(true);
     try {
       await api.put(`/users/${selectedUser.id}/password`, { new_password: newPassword });
-      setPwSuccess(t('passwordUpdatedFor').replace('{name}', selectedUser.name));
+      setPwSuccess(t('passwordUpdatedFor').replace('{name}', getDynamic(selectedUser.name)));
       setPwModalOpen(false);
       setTimeout(() => setPwSuccess(''), 3000);
     } catch (err) {
@@ -65,13 +73,15 @@ export default function SuperAdminUsers() {
 
   const formatDate = (dateStr) => {
     if (!dateStr) return '—';
-    return new Date(dateStr).toLocaleDateString('en-US', {
+    return new Date(dateStr).toLocaleDateString(lang === 'te' ? 'te-IN' : 'en-US', {
       month: 'short', day: 'numeric', year: 'numeric',
     });
   };
 
   const adminUsers = allUsers.filter((u) => u.role === 'admin');
   const regularUsers = allUsers.filter((u) => u.role === 'user');
+
+  const roleLabel = (role) => t(role === 'super_admin' ? 'superAdmin' : role === 'admin' ? 'admin' : 'user');
 
   const roleBadgeClass = (role) => {
     if (role === 'super_admin') return 'bg-red-100 text-red-700';
@@ -101,10 +111,10 @@ export default function SuperAdminUsers() {
               <div key={u.id} className="card">
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-900 dark:text-gray-100 truncate">{u.name}</p>
+                    <p className="font-medium text-gray-900 dark:text-gray-100 truncate">{getDynamic(u.name)}</p>
                     <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{u.email}</p>
                   </div>
-                  <span className={`badge ${roleBadgeClass(u.role)}`}>{u.role}</span>
+                  <span className={`badge ${roleBadgeClass(u.role)}`}>{roleLabel(u.role)}</span>
                 </div>
                 <button
                   onClick={() => openPwModal(u)}
@@ -132,10 +142,10 @@ export default function SuperAdminUsers() {
               <tbody className="divide-y divide-gray-200">
                 {users.map((u) => (
                   <tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                    <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{u.name}</td>
+                    <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{getDynamic(u.name)}</td>
                     <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{u.email}</td>
                     <td className="px-4 py-3">
-                      <span className={`badge ${roleBadgeClass(u.role)}`}>{u.role}</span>
+                      <span className={`badge ${roleBadgeClass(u.role)}`}>{roleLabel(u.role)}</span>
                     </td>
                     <td className="px-4 py-3 text-gray-500 dark:text-gray-400 text-sm">{formatDate(u.created_at)}</td>
                     <td className="px-4 py-3">
@@ -196,9 +206,9 @@ export default function SuperAdminUsers() {
           )}
           {selectedUser && (
             <div className="rounded-lg bg-gray-50 px-4 py-3 dark:bg-gray-700">
-              <p className="font-medium text-gray-900 dark:text-gray-100">{selectedUser.name}</p>
+              <p className="font-medium text-gray-900 dark:text-gray-100">{getDynamic(selectedUser.name)}</p>
               <p className="text-sm text-gray-500 dark:text-gray-400">{selectedUser.email}</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{t('role')}: <span className="font-medium">{selectedUser.role}</span></p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{t('role')}: <span className="font-medium">{roleLabel(selectedUser.role)}</span></p>
             </div>
           )}
           <div>
@@ -208,7 +218,7 @@ export default function SuperAdminUsers() {
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               className="input"
-              placeholder="At least 6 characters"
+              placeholder={t('passwordMinLengthPlaceholder')}
               autoFocus
             />
           </div>

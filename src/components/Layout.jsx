@@ -10,7 +10,7 @@ import { useChat } from '../context/ChatContext';
 export default function Layout({ children }) {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const { lang, toggleLang, t } = useLang();
+  const { lang, toggleLang, t, translating, getDynamic } = useLang();
   const { totalUnread: chatUnread } = useChat();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -127,15 +127,20 @@ export default function Layout({ children }) {
           <div className="flex items-center gap-2">
             <button
               onClick={toggleLang}
-              className="text-xs font-medium px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-              title="Toggle language"
+              className="text-xs font-medium px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors relative"
+              title={t('toggleLanguage')}
+              disabled={translating}
             >
-              {lang === 'en' ? 'EN' : 'TE'}
+              {translating ? (
+                <span className="inline-block w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+              ) : (
+                lang === 'en' ? 'EN' : 'TE'
+              )}
             </button>
             <button
               onClick={toggleTheme}
               className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
-              title="Toggle theme"
+              title={t('toggleTheme')}
             >
               {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
             </button>
@@ -183,7 +188,7 @@ export default function Layout({ children }) {
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5">
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{user?.name}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{getDynamic(user?.name)}</p>
               </div>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span className={`badge text-[10px] leading-none ${ROLE_BADGE[user?.role] || ROLE_BADGE.user}`}>
@@ -212,9 +217,14 @@ export default function Layout({ children }) {
         <div className="flex items-center gap-2">
           <button
             onClick={toggleLang}
-            className="text-xs font-medium px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
+            className="text-xs font-medium px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 relative"
+            disabled={translating}
           >
-            {lang === 'en' ? 'EN' : 'TE'}
+            {translating ? (
+              <span className="inline-block w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+            ) : (
+              lang === 'en' ? 'EN' : 'TE'
+            )}
           </button>
           <button
             onClick={toggleTheme}

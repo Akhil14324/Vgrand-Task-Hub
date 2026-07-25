@@ -3,9 +3,11 @@ import Modal from '../Modal';
 import { Search, Check, Users, User } from 'lucide-react';
 import api from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
+import { useLang } from '../../context/LanguageContext';
 
 export default function NewConversationModal({ open, onClose, onCreate }) {
   const { user } = useAuth();
+  const { t } = useLang();
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState([]);
@@ -33,7 +35,7 @@ export default function NewConversationModal({ open, onClose, onCreate }) {
       const allUsers = (res.data.users || res.data || []).filter((u) => u.id !== user.id);
       setUsers(allUsers);
     } catch {
-      setError('Failed to load users');
+      setError(t('failedLoadUsers'));
     } finally {
       setLoading(false);
     }
@@ -54,27 +56,27 @@ export default function NewConversationModal({ open, onClose, onCreate }) {
 
   const handleCreate = async () => {
     if (selected.length === 0) {
-      setError('Select at least one user');
+      setError(t('selectAtLeastOneUser'));
       return;
     }
     if (chatType === 'group' && !groupName.trim()) {
-      setError('Group name is required');
+      setError(t('groupNameRequired'));
       return;
     }
     if (chatType === 'group' && selected.length < 2) {
-      setError('Group chat needs at least 2 other participants');
+      setError(t('groupNeedsParticipants'));
       return;
     }
     try {
       await onCreate(chatType, selected, groupName.trim() || undefined);
       onClose();
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to create conversation');
+      setError(err.response?.data?.error || t('failedCreateConversation'));
     }
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="New Conversation">
+    <Modal open={open} onClose={onClose} title={t('newConversation')}>
       <div className="space-y-4">
         {error && (
           <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm rounded-lg p-2">
@@ -92,7 +94,7 @@ export default function NewConversationModal({ open, onClose, onCreate }) {
             }`}
           >
             <User size={16} />
-            Direct
+            {t('direct')}
           </button>
           <button
             onClick={() => { setChatType('group'); setSelected([]); }}
@@ -103,7 +105,7 @@ export default function NewConversationModal({ open, onClose, onCreate }) {
             }`}
           >
             <Users size={16} />
-            Group
+            {t('group')}
           </button>
         </div>
 
@@ -112,7 +114,7 @@ export default function NewConversationModal({ open, onClose, onCreate }) {
             type="text"
             value={groupName}
             onChange={(e) => setGroupName(e.target.value)}
-            placeholder="Group name"
+            placeholder={t('groupNamePlaceholder')}
             className="w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500"
           />
         )}
@@ -123,16 +125,16 @@ export default function NewConversationModal({ open, onClose, onCreate }) {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search users..."
+            placeholder={t('searchUsersPlaceholder')}
             className="w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 pl-9 pr-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500"
           />
         </div>
 
         <div className="max-h-60 overflow-y-auto space-y-1">
           {loading ? (
-            <div className="text-center text-sm text-gray-400 py-4">Loading users...</div>
+            <div className="text-center text-sm text-gray-400 py-4">{t('loadingUsers')}</div>
           ) : filtered.length === 0 ? (
-            <div className="text-center text-sm text-gray-400 py-4">No users found</div>
+            <div className="text-center text-sm text-gray-400 py-4">{t('noUsersFound')}</div>
           ) : (
             filtered.map((u) => (
               <button
@@ -164,14 +166,14 @@ export default function NewConversationModal({ open, onClose, onCreate }) {
             onClick={onClose}
             className="flex-1 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
           >
-            Cancel
+            {t('cancel')}
           </button>
           <button
             onClick={handleCreate}
             disabled={selected.length === 0}
             className="flex-1 py-2 rounded-lg bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {chatType === 'group' ? 'Create Group' : 'Start Chat'}
+            {chatType === 'group' ? t('createGroup') : t('startChat')}
           </button>
         </div>
       </div>

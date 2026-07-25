@@ -7,7 +7,7 @@ import { CheckCircle, Clock, AlertTriangle, Plus, Building2, Calendar, PauseCirc
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const { t } = useLang();
+  const { t, lang, translateDynamic, getDynamic } = useLang();
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -29,6 +29,20 @@ export default function Dashboard() {
     };
     fetchTasks();
   }, [user]);
+
+  // Translate dynamic content when in Telugu
+  useEffect(() => {
+    if (lang !== 'te' || tasks.length === 0) return;
+    const texts = [];
+    tasks.forEach((task) => {
+      if (task.title) texts.push(task.title);
+      if (task.business_name) texts.push(task.business_name);
+      if (task.created_by_name) texts.push(task.created_by_name);
+    });
+    if (user?.business_name) texts.push(user.business_name);
+    const unique = [...new Set(texts)];
+    if (unique.length > 0) translateDynamic(unique);
+  }, [tasks, lang, user, translateDynamic]);
 
   if (loading) {
     return (
@@ -71,7 +85,7 @@ export default function Dashboard() {
 
   const formatDate = (dateStr) => {
     if (!dateStr) return null;
-    return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return new Date(dateStr).toLocaleDateString(lang === 'te' ? 'te-IN' : 'en-US', { month: 'short', day: 'numeric' });
   };
 
   return (
@@ -79,7 +93,7 @@ export default function Dashboard() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('dashboard')}</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{user.business_name || t('yourBusiness')}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{getDynamic(user.business_name) || t('yourBusiness')}</p>
         </div>
         <Link to="/tasks" className="btn-primary">
           <Plus size={18} className="mr-1" />
@@ -142,10 +156,10 @@ export default function Dashboard() {
               )}
               <div className="flex-1 min-w-0">
                 <p className={`font-medium truncate ${task.status === 'completed' ? 'line-through text-gray-400' : 'text-gray-900 dark:text-gray-100'}`}>
-                  {task.title}
+                  {getDynamic(task.title)}
                 </p>
                 <div className="flex items-center gap-3 text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                  <span>{t('createdBy')} {task.created_by_name}</span>
+                  <span>{t('createdBy')} {getDynamic(task.created_by_name)}</span>
                   {task.due_date && (
                     <span className="flex items-center gap-1">
                       <Calendar size={12} />

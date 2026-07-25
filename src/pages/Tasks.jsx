@@ -8,7 +8,7 @@ import { Plus, CheckCircle, Circle, AlertTriangle, Calendar, Filter, Trash2, Pen
 
 export default function Tasks() {
   const { user, refreshUser } = useAuth();
-  const { t } = useLang();
+  const { t, lang, translateDynamic, getDynamic } = useLang();
   const location = useLocation();
   const isAdmin = ['admin', 'super_admin'].includes(user?.role);
   const isAdminTasks = location.pathname.startsWith('/admin');
@@ -68,6 +68,22 @@ export default function Tasks() {
     fetchTasks();
     fetchBusinesses();
   }, [fetchTasks]);
+
+  // Translate user-entered dynamic content when in Telugu
+  useEffect(() => {
+    if (lang !== 'te' || tasks.length === 0) return;
+    const texts = [];
+    tasks.forEach((task) => {
+      if (task.title) texts.push(task.title);
+      if (task.description) texts.push(task.description);
+      if (task.business_name) texts.push(task.business_name);
+      if (task.warning_message) texts.push(task.warning_message);
+      if (task.created_by_name) texts.push(task.created_by_name);
+      if (task.completed_by_name) texts.push(task.completed_by_name);
+    });
+    const unique = [...new Set(texts)];
+    if (unique.length > 0) translateDynamic(unique);
+  }, [tasks, lang, translateDynamic]);
 
   const fetchBusinessUsers = async (bizId) => {
     if (!bizId) {
@@ -221,7 +237,7 @@ export default function Tasks() {
   const formatDate = (dateStr) => {
     if (!dateStr) return null;
     const d = new Date(dateStr);
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    return d.toLocaleDateString(lang === 'te' ? 'te-IN' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
   const isOverdue = (task) => {
@@ -316,14 +332,14 @@ export default function Tasks() {
                   </button>
                   <div className="flex-1 min-w-0">
                     <h3 className={`font-medium ${task.status === 'completed' ? 'line-through text-gray-400' : 'text-gray-900 dark:text-gray-100'}`}>
-                      {task.title}
+                      {getDynamic(task.title)}
                     </h3>
                     {task.description && (
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 break-words">{task.description}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 break-words">{getDynamic(task.description)}</p>
                     )}
                     <div className="flex flex-wrap items-center gap-2 mt-2">
                       {isAdminTasks && task.business_name && (
-                        <span className="badge bg-brand-100 text-brand-700">{task.business_name}</span>
+                        <span className="badge bg-brand-100 text-brand-700">{getDynamic(task.business_name)}</span>
                       )}
                       {isAdminTasks && task.assigned_user_name && (
                         <span className="badge bg-indigo-100 text-indigo-700">{t('assigned')}: {task.assigned_user_name}</span>
@@ -354,13 +370,13 @@ export default function Tasks() {
                           <AlertTriangle size={12} />
                           {t('warning')}
                         </p>
-                        <p className="text-sm text-red-700 mt-1 leading-relaxed">{task.warning_message}</p>
+                        <p className="text-sm text-red-700 mt-1 leading-relaxed">{getDynamic(task.warning_message)}</p>
                       </div>
                     )}
                     <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-gray-400 dark:text-gray-500">
-                      <span>{t('createdBy')} {task.created_by_name}</span>
+                      <span>{t('createdBy')} {getDynamic(task.created_by_name)}</span>
                       {task.due_date && <span>{t('due')}: {formatDate(task.due_date)}</span>}
-                      {task.completed_by_name && <span>{t('doneBy')} {task.completed_by_name}</span>}
+                      {task.completed_by_name && <span>{t('doneBy')} {getDynamic(task.completed_by_name)}</span>}
                     </div>
                     <div className="flex items-center gap-3 mt-3">
                       {isAdminTasks && task.status !== 'completed' && (
@@ -443,10 +459,10 @@ export default function Tasks() {
                     </td>
                     <td className="px-4 py-3">
                       <div className={`font-medium ${task.status === 'completed' ? 'line-through text-gray-400' : 'text-gray-900 dark:text-gray-100'}`}>
-                        {task.title}
+                        {getDynamic(task.title)}
                       </div>
                       {task.description && (
-                        <div className="text-sm text-gray-500 dark:text-gray-400 break-words">{task.description}</div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400 break-words">{getDynamic(task.description)}</div>
                       )}
                       {task.is_warned && !task.warning_message && (
                         <span className="badge bg-red-100 text-red-700 mt-1">
@@ -460,11 +476,11 @@ export default function Tasks() {
                             <AlertTriangle size={12} />
                             {t('warning')}
                           </p>
-                          <p className="text-sm text-red-700 mt-1 leading-relaxed">{task.warning_message}</p>
+                          <p className="text-sm text-red-700 mt-1 leading-relaxed">{getDynamic(task.warning_message)}</p>
                         </div>
                       )}
                     </td>
-                    {isAdminTasks && <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{task.business_name}</td>}
+                    {isAdminTasks && <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{getDynamic(task.business_name)}</td>}
                     {isAdminTasks && (
                       <td className="px-4 py-3 text-gray-600 dark:text-gray-300">
                         {task.assigned_user_name || <span className="text-gray-400 italic">{t('allUsersInBusiness')}</span>}
@@ -489,7 +505,7 @@ export default function Tasks() {
                         <span className="text-gray-400">—</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{task.created_by_name}</td>
+                    <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{getDynamic(task.created_by_name)}</td>
                     <td className="px-4 py-3">
                       <div className="flex justify-center gap-2">
                         {isAdminTasks && task.status !== 'completed' && (
@@ -606,7 +622,7 @@ export default function Tasks() {
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
               className="input"
-              placeholder="e.g. Clean the kitchen"
+              placeholder={t('taskTitlePlaceholder')}
             />
           </div>
           <div>
@@ -647,8 +663,8 @@ export default function Tasks() {
           )}
           {warnTask && (
             <div className="rounded-lg bg-gray-50 px-4 py-3 dark:bg-gray-700">
-              <p className="font-medium text-gray-900 dark:text-gray-100">{warnTask.title}</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">{t('createdBy')} {warnTask.created_by_name}</p>
+              <p className="font-medium text-gray-900 dark:text-gray-100">{getDynamic(warnTask.title)}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{t('createdBy')} {getDynamic(warnTask.created_by_name)}</p>
             </div>
           )}
           <div>
@@ -658,7 +674,7 @@ export default function Tasks() {
               onChange={(e) => setWarnMessage(e.target.value)}
               className="input"
               rows={4}
-              placeholder="e.g. This task is overdue. Please complete it immediately."
+              placeholder={t('warningPlaceholder')}
               autoFocus
             />
           </div>
@@ -687,7 +703,7 @@ export default function Tasks() {
               value={editForm.title}
               onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
               className="input"
-              placeholder="e.g. Clean the kitchen"
+              placeholder={t('taskTitlePlaceholder')}
               autoFocus
             />
           </div>

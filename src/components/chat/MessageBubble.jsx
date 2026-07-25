@@ -1,11 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
 import { Check, CheckCheck, MoreVertical, Trash2 } from 'lucide-react';
+import { useLang } from '../../context/LanguageContext';
 
 const DELETE_WINDOW_MS = 15 * 60 * 1000;
 
 export default function MessageBubble({ message, isOwn, showAvatar, readBy, participants, onDeleteMessage }) {
+  const { t, lang } = useLang();
   const isDeleted = !!(message.deletedAt || message.deleted_at);
-  const displayName = message.senderName || message.sender_name || 'Unknown';
+  const displayName = message.senderName || message.sender_name || t('unknown');
   const createdAt = message.createdAt || message.created_at;
   const [showMenu, setShowMenu] = useState(false);
   const [showConfirm, setShowConfirm] = useState(null);
@@ -46,7 +48,7 @@ export default function MessageBubble({ message, isOwn, showAvatar, readBy, part
     if (!dateStr) return '';
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return '';
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleTimeString(lang === 'te' ? 'te-IN' : 'en-US', { hour: '2-digit', minute: '2-digit' });
   };
 
   const otherParticipantIds = (participants || []).filter((p) => p !== message.senderId);
@@ -100,7 +102,7 @@ export default function MessageBubble({ message, isOwn, showAvatar, readBy, part
                 ? 'text-white/70 hover:text-white'
                 : 'text-gray-500 hover:text-gray-700 dark:text-gray-500 dark:hover:text-gray-300'
             }`}
-            title="Message options"
+            title={t('messageOptions')}
           >
             <MoreVertical size={14} />
           </button>
@@ -114,28 +116,28 @@ export default function MessageBubble({ message, isOwn, showAvatar, readBy, part
               onClick={() => handleDelete('me')}
               className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 whitespace-nowrap"
             >
-              <Trash2 size={14} /> Delete for me
+              <Trash2 size={14} /> {t('deleteForMe')}
             </button>
             {canDeleteForEveryone && (
               <button
                 onClick={() => handleDelete('everyone')}
                 className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 whitespace-nowrap"
               >
-                <Trash2 size={14} /> Delete for everyone
+                <Trash2 size={14} /> {t('deleteForEveryone')}
               </button>
             )}
           </div>
         )}
 
           {isDeleted ? (
-            <span className="italic opacity-60">This message was deleted</span>
+            <span className="italic opacity-60">{t('messageDeleted')}</span>
           ) : (
             <>
               {message.body && <p className="whitespace-pre-wrap">{message.body}</p>}
               {message.attachmentUrl && message.attachmentType?.startsWith('image/') && (
                 <img
                   src={message.attachmentUrl}
-                  alt="attachment"
+                  alt={t('attachment')}
                   className="mt-1 rounded-lg max-w-full max-h-60 object-cover cursor-pointer"
                   onClick={() => window.open(message.attachmentUrl, '_blank')}
                 />
@@ -147,7 +149,7 @@ export default function MessageBubble({ message, isOwn, showAvatar, readBy, part
                   rel="noopener noreferrer"
                   className={`mt-1 underline ${isOwn ? 'text-white' : 'text-brand-600 dark:text-brand-400'}`}
                 >
-                  View attachment
+                  {t('viewAttachment')}
                 </a>
               )}
             </>

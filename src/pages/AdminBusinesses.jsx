@@ -13,7 +13,7 @@ const DEFAULT_TYPES = [
 ];
 
 export default function AdminBusinesses() {
-  const { t } = useLang();
+  const { t, lang, translateDynamic, getDynamic } = useLang();
   const [businesses, setBusinesses] = useState([]);
   const [businessTypes, setBusinessTypes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -50,11 +50,26 @@ export default function AdminBusinesses() {
     fetchTypes();
   }, []);
 
+  // Translate user-entered business names and custom types when in Telugu
+  useEffect(() => {
+    if (lang !== 'te' || businesses.length === 0) return;
+    const texts = [];
+    businesses.forEach((biz) => {
+      if (biz.name) texts.push(biz.name);
+      const custom = DEFAULT_TYPES.find((dt) => dt.value === biz.type) ? null : biz.type;
+      if (custom) texts.push(custom.replace(/_/g, ' '));
+    });
+    const unique = [...new Set(texts)];
+    if (unique.length > 0) translateDynamic(unique);
+  }, [businesses, lang, translateDynamic]);
+
   const typeOptions = [...new Set([...DEFAULT_TYPES.map((t) => t.value), ...businessTypes])];
 
   const getTypeLabel = (type) => {
     const found = DEFAULT_TYPES.find((dt) => dt.value === type);
-    return found ? t(found.labelKey) : type.replace(/_/g, ' ');
+    if (found) return t(found.labelKey);
+    const custom = type.replace(/_/g, ' ');
+    return getDynamic(custom);
   };
 
   const getFinalType = () => {
@@ -113,7 +128,7 @@ export default function AdminBusinesses() {
   };
 
   const handleDelete = async (biz) => {
-    if (!confirm(t('deleteBusinessConfirm').replace('{name}', biz.name))) return;
+    if (!confirm(t('deleteBusinessConfirm').replace('{name}', getDynamic(biz.name)))) return;
     try {
       await api.delete(`/businesses/${biz.id}`);
       fetchBusinesses();
@@ -160,7 +175,7 @@ export default function AdminBusinesses() {
               <div key={biz.id} className="card">
                 <div className="flex items-start justify-between mb-3">
                   <div>
-                    <h3 className="font-semibold text-gray-900 dark:text-gray-100">{biz.name}</h3>
+                    <h3 className="font-semibold text-gray-900 dark:text-gray-100">{getDynamic(biz.name)}</h3>
                     <span className="badge bg-brand-100 text-brand-700 mt-1">{getTypeLabel(biz.type)}</span>
                   </div>
                   <div className="flex gap-1">
@@ -217,7 +232,7 @@ export default function AdminBusinesses() {
                 {businesses.map((biz) => (
                   <tr key={biz.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                     <td className="px-4 py-3">
-                      <div className="font-medium text-gray-900 dark:text-gray-100">{biz.name}</div>
+                      <div className="font-medium text-gray-900 dark:text-gray-100">{getDynamic(biz.name)}</div>
                     </td>
                     <td className="px-4 py-3">
                       <span className="badge bg-brand-100 text-brand-700">{getTypeLabel(biz.type)}</span>
@@ -260,7 +275,7 @@ export default function AdminBusinesses() {
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               className="input"
-              placeholder="e.g. Downtown Restaurant"
+              placeholder={t('businessNamePlaceholder')}
             />
           </div>
           <div>
@@ -284,7 +299,7 @@ export default function AdminBusinesses() {
                 value={form.customType}
                 onChange={(e) => setForm({ ...form, customType: e.target.value })}
                 className="input"
-                placeholder="e.g. Retail, Warehouse, etc."
+                placeholder={t('customTypePlaceholder')}
               />
             </div>
           )}

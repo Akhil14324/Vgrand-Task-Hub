@@ -1,21 +1,23 @@
 import { Users, Trash2 } from 'lucide-react';
+import { useLang } from '../../context/LanguageContext';
 
 export default function ConversationListItem({ conversation, currentUserId, onlineUsers, isActive, onClick, onDelete }) {
+  const { t, lang } = useLang();
   const isGroup = conversation.type === 'group';
   const title =
     isGroup
       ? conversation.name
-      : conversation.participants?.find((p) => p.id !== currentUserId)?.name || 'Unknown';
+      : conversation.participants?.find((p) => p.id !== currentUserId)?.name || t('unknown');
 
   const lastMsg = conversation.last_message;
   const preview = lastMsg
     ? lastMsg.deleted_at
-      ? 'This message was deleted'
-      : lastMsg.body || (lastMsg.attachment_url ? '[Attachment]' : '')
-    : 'No messages yet';
+      ? t('messageDeleted')
+      : lastMsg.body || (lastMsg.attachment_url ? `[${t('attachment')}]` : '')
+    : t('noMessagesYet');
 
   const lastMsgTime = lastMsg?.created_at
-    ? new Date(lastMsg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    ? new Date(lastMsg.created_at).toLocaleTimeString(lang === 'te' ? 'te-IN' : 'en-US', { hour: '2-digit', minute: '2-digit' })
     : '';
 
   const otherParticipant = !isGroup
@@ -63,8 +65,8 @@ export default function ConversationListItem({ conversation, currentUserId, onli
                 onDelete(conversation.id);
               }}
               className="p-1.5 rounded text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-              title="Delete chat"
-              aria-label="Delete chat"
+              title={t('deleteChat')}
+              aria-label={t('deleteChat')}
             >
               <Trash2 size={14} />
             </button>
