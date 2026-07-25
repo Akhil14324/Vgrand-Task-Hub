@@ -48,12 +48,7 @@ export default function MessageInput({ onSend, onTypingStart, onTypingStop, disa
     if (!file) return;
     setUploading(true);
     try {
-      const { onUpload } = { onUpload: null };
-      if (onUpload) {
-        await onUpload(file);
-      } else {
-        onSend?.(null, file);
-      }
+      await onSend?.(null, file);
     } catch {
       // ignore
     } finally {

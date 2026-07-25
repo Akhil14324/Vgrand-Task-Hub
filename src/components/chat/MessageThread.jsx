@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useMemo } from 'react';
+import { useLang } from '../../context/LanguageContext';
 import MessageBubble from './MessageBubble';
 import MessageInput from './MessageInput';
 import TypingIndicator from './TypingIndicator';
@@ -36,12 +37,15 @@ export default function MessageThread({
   hasMore,
   onDeleteMessage,
 }) {
+  const { t } = useLang();
   const scrollRef = useRef(null);
   const lastMarkedRef = useRef(null);
+  const loadingMoreRef = useRef(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const normalizedMessages = useMemo(() => messages.map(normalizeMessage), [messages]);
 
   useEffect(() => {
+    if (loadingMoreRef.current) return;
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
@@ -60,14 +64,16 @@ export default function MessageThread({
   const handleScroll = async () => {
     if (scrollRef.current && scrollRef.current.scrollTop < 50 && hasMore && !loadingMore) {
       setLoadingMore(true);
+      loadingMoreRef.current = true;
       const prevHeight = scrollRef.current.scrollHeight;
       await onLoadMore?.();
       requestAnimationFrame(() => {
         if (scrollRef.current) {
           scrollRef.current.scrollTop = scrollRef.current.scrollHeight - prevHeight;
         }
+        loadingMoreRef.current = false;
+        setLoadingMore(false);
       });
-      setLoadingMore(false);
     }
   };
 
@@ -76,7 +82,7 @@ export default function MessageThread({
       <div className="flex-1 flex items-center justify-center text-gray-400 dark:text-gray-500">
         <div className="text-center">
           <Users size={48} className="mx-auto mb-3 opacity-50" />
-          <p>Select a conversation to start chatting</p>
+          <p>{t('selectConversation')}</p>
         </div>
       </div>
     );
@@ -105,10 +111,10 @@ export default function MessageThread({
           <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate">{conversationTitle}</h3>
           <p className="text-xs text-gray-500 dark:text-gray-400">
             {conversation.type === 'group'
-              ? `${conversation.participants?.length || 0} members`
+              ? `${conversation.participants?.length || 0} ${t('members')}`
               : isOtherOnline
-                ? 'Online'
-                : 'Offline'}
+                ? t('online')
+                : t('offline')}
           </p>
         </div>
       </div>
@@ -119,11 +125,11 @@ export default function MessageThread({
         className="flex-1 overflow-y-auto p-4 space-y-1 bg-gray-50 dark:bg-gray-900"
       >
         {loadingMore && (
-          <div className="text-center text-xs text-gray-400 py-2">Loading older messages...</div>
+          <div className="text-center text-xs text-gray-400 py-2">{t('loadingOlder')}</div>
         )}
         {messages.length === 0 && !loadingMore && (
           <div className="text-center text-sm text-gray-400 dark:text-gray-500 py-8">
-            No messages yet. Say hello!
+            {t('noMessagesYet')}
           </div>
         )}
         {normalizedMessages.map((msg, idx) => {

@@ -67,21 +67,21 @@ export default function MessageBubble({ message, isOwn, showAvatar, readBy, part
             <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-xl p-4 max-w-xs w-full mx-4">
               <p className="text-sm text-gray-900 dark:text-gray-100 mb-4">
                 {showConfirm === 'everyone'
-                  ? 'Delete this message for everyone?'
-                  : 'Delete this message for yourself?'}
+                  ? t('deleteForEveryoneConfirm')
+                  : t('deleteForMeConfirm')}
               </p>
               <div className="flex gap-2 justify-end">
                 <button
                   onClick={() => setShowConfirm(null)}
                   className="px-3 py-1.5 text-sm rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
                 >
-                  Cancel
+                  {t('cancel')}
                 </button>
                 <button
                   onClick={confirmDelete}
                   className="px-3 py-1.5 text-sm rounded-lg bg-red-600 text-white hover:bg-red-700"
                 >
-                  Delete
+                  {t('delete')}
                 </button>
               </div>
             </div>

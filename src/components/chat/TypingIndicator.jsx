@@ -1,9 +1,12 @@
+import { useLang } from '../../context/LanguageContext';
+
 export default function TypingIndicator({ typingUsers, currentUserId }) {
+  const { t } = useLang();
   const active = typingUsers.filter((u) => u.userId !== currentUserId);
   if (active.length === 0) return null;
 
   const names = active.map((u) => u.userName).join(', ');
-  const text = active.length === 1 ? `${names} is typing...` : `${names} are typing...`;
+  const text = active.length === 1 ? `${names} ${t('isTyping')}` : `${names} ${t('areTyping')}`;
 
   return (
     <div className="flex items-center gap-2 px-4 py-1.5 text-xs text-gray-500 dark:text-gray-400">

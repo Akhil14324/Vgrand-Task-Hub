@@ -179,8 +179,20 @@ export default function Profile() {
       setPwError(t('allFieldsRequired'));
       return;
     }
-    if (pwForm.new_password.length < 6) {
+    if (pwForm.new_password.length < 8) {
       setPwError(t('passwordMinLength'));
+      return;
+    }
+    if (!/[A-Z]/.test(pwForm.new_password)) {
+      setPwError(t('passwordUppercaseError'));
+      return;
+    }
+    if (!/[a-z]/.test(pwForm.new_password)) {
+      setPwError(t('passwordLowercaseError'));
+      return;
+    }
+    if (!/[0-9]/.test(pwForm.new_password)) {
+      setPwError(t('passwordNumberError'));
       return;
     }
     if (pwForm.new_password !== pwForm.confirm_password) {

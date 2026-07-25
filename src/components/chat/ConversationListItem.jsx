@@ -26,9 +26,12 @@ export default function ConversationListItem({ conversation, currentUserId, onli
   const isOnline = otherParticipant && onlineUsers.has(otherParticipant.id);
 
   return (
-    <button
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
-      className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-left ${
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } }}
+      className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-left cursor-pointer ${
         isActive
           ? 'bg-brand-50 dark:bg-brand-900/20'
           : 'hover:bg-gray-100 dark:hover:bg-gray-700'
@@ -78,6 +81,6 @@ export default function ConversationListItem({ conversation, currentUserId, onli
           )}
         </div>
       </div>
-    </button>
+    </div>
   );
 }

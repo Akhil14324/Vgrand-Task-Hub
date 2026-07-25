@@ -68,10 +68,10 @@ export default function Dashboard() {
   }
 
   const totalTasks = tasks.length;
-  const completedTasks = tasks.filter((t) => t.status === 'completed').length;
-  const pendingTasks = tasks.filter((t) => t.status === 'pending').length;
-  const onHoldTasks = tasks.filter((t) => t.status === 'on_hold').length;
-  const warnedTasks = tasks.filter((t) => t.is_warned).length;
+  const completedTasks = tasks.filter((task) => task.status === 'completed').length;
+  const pendingTasks = tasks.filter((task) => task.status === 'pending').length;
+  const onHoldTasks = tasks.filter((task) => task.status === 'on_hold').length;
+  const warnedTasks = tasks.filter((task) => task.is_warned).length;
   const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
   const recentTasks = tasks.slice(0, 5);
 

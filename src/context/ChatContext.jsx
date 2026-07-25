@@ -19,9 +19,11 @@ export function ChatProvider({ children }) {
   const socketRef = useRef(null);
   const messagesRef = useRef([]);
   const conversationsRef = useRef([]);
+  const activeConversationIdRef = useRef(null);
 
   useEffect(() => { messagesRef.current = messages; }, [messages]);
   useEffect(() => { conversationsRef.current = conversations; }, [conversations]);
+  useEffect(() => { activeConversationIdRef.current = activeConversationId; }, [activeConversationId]);
 
   const fetchConversations = useCallback(async () => {
     try {
@@ -100,7 +102,7 @@ export function ChatProvider({ children }) {
 
       if (normalized.senderId !== user.id) {
         setTotalUnread((prev) => prev + 1);
-        if (!document.hasFocus() || normalized.conversationId !== activeConversationId) {
+        if (!document.hasFocus() || normalized.conversationId !== activeConversationIdRef.current) {
           window.dispatchEvent(new CustomEvent('chat:new-message', { detail: normalized }));
         }
       }
@@ -170,10 +172,10 @@ export function ChatProvider({ children }) {
             ? {
                 ...c,
                 last_message: {
+                  ...c.last_message,
                   body: data.lastMessagePreview,
                   created_at: data.lastMessageAt,
                 },
-                unread_count: c.unread_count + 1,
               }
             : c
         );

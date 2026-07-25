@@ -48,12 +48,6 @@ export default function Layout({ children }) {
     user: 'bg-brand-100 text-brand-700',
   };
 
-  const ROLE_BADGE = {
-    super_admin: 'bg-purple-100 text-purple-700',
-    admin: 'bg-indigo-100 text-indigo-700',
-    user: 'bg-brand-100 text-brand-700',
-  };
-
   const ROLE_LABEL = {
     super_admin: t('superAdmin'),
     admin: t('admin'),
@@ -191,7 +185,7 @@ export default function Layout({ children }) {
                 <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{getDynamic(user?.name)}</p>
               </div>
               <div className="flex items-center gap-1.5 mt-0.5">
-                <span className={`badge text-[10px] leading-none ${ROLE_BADGE[user?.role] || ROLE_BADGE.user}`}>
+                <span className={`badge text-[10px] leading-none ${ROLE_AVATAR[user?.role] || ROLE_AVATAR.user}`}>
                   {ROLE_LABEL[user?.role] || t('user')}
                 </span>
               </div>

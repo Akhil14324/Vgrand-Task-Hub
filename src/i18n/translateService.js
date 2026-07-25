@@ -47,7 +47,7 @@ async function translateWithGoogle(texts, targetLang) {
 
   const data = await res.json();
   const translations = data.data?.translations || [];
-  return translations.map((t) => t.translatedText || texts[translations.indexOf(t)]);
+  return translations.map((t, i) => t.translatedText || texts[i] || texts[0]);
 }
 
 async function translateWithMyMemory(text, targetLang) {

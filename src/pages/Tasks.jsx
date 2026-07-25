@@ -35,6 +35,12 @@ export default function Tasks() {
   const [editForm, setEditForm] = useState({ title: '', description: '', due_date: '' });
   const [editError, setEditError] = useState('');
 
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    setFilterBusiness(params.get('business_id') || '');
+    setFilterStatus(params.get('status') || '');
+  }, [location.search]);
+
   const fetchTasks = useCallback(async () => {
     setLoading(true);
     try {
@@ -92,8 +98,9 @@ export default function Tasks() {
     }
     try {
       const res = await api.get('/users');
-      const assigned = (res.data.users || res.users || []).filter(
-        (u) => u.business_id === parseInt(bizId) && u.role === 'user'
+      const allUsers = res.data.users || res.users || [];
+      const assigned = allUsers.filter(
+        (u) => u.role === 'user' && Array.isArray(u.businesses) && u.businesses.some((b) => b.id === parseInt(bizId))
       );
       setBusinessUsers(assigned);
     } catch {
