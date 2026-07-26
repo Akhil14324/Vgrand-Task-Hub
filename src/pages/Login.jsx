@@ -11,7 +11,7 @@ export default function Login() {
   const { theme, toggleTheme } = useTheme();
   const { lang, toggleLang, t, translating } = useLang();
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -20,13 +20,13 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    if (!email || !password) {
-      setError(t('enterEmailPassword'));
+    if (!username || !password) {
+      setError(t('enterUsernamePassword'));
       return;
     }
     setLoading(true);
     try {
-      const res = await api.post('/auth/login', { email, password });
+      const res = await api.post('/auth/login', { username, password });
       login(res.data.token, res.data.user);
       navigate(['admin', 'super_admin'].includes(res.data.user.role) ? '/admin' : '/dashboard');
     } catch (err) {
@@ -74,14 +74,14 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('email')}</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('username')}</label>
               <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 className="input"
-                placeholder={t('emailPlaceholder')}
-                autoComplete="email"
+                placeholder={t('usernamePlaceholder')}
+                autoComplete="username"
               />
             </div>
 

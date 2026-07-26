@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import ConversationList from '../components/chat/ConversationList';
 import MessageThread from '../components/chat/MessageThread';
 import NewConversationModal from '../components/chat/NewConversationModal';
+import ConfirmDialog from '../components/ConfirmDialog';
 
 export default function Chat() {
   const { conversationId } = useParams();
@@ -95,6 +96,15 @@ export default function Chat() {
     }
   };
 
+  const handleMarkConversationRead = async (conversationId) => {
+    const conv = conversations.find((c) => c.id === conversationId);
+    const lastMsg = conv?.last_message;
+    if (lastMsg && conv?.unread_count > 0) {
+      await markRead(conversationId, lastMsg.id);
+      await fetchConversations();
+    }
+  };
+
   const handleCreate = async (type, participantIds, name) => {
     const conv = await createConversation(type, participantIds, name);
     navigate(`/chat/${conv.id}`);
@@ -104,8 +114,16 @@ export default function Chat() {
     await deleteMessage(messageId, scope);
   };
 
-  const handleDelete = async (conversationId) => {
-    if (!window.confirm('Delete this chat? This will remove it from your list.')) return;
+  const [deleteConvId, setDeleteConvId] = useState(null);
+
+  const handleDelete = (conversationId) => {
+    setDeleteConvId(conversationId);
+  };
+
+  const confirmDeleteConversation = async () => {
+    const conversationId = deleteConvId;
+    setDeleteConvId(null);
+    if (!conversationId) return;
     await deleteConversation(conversationId);
     if (activeConversationId === conversationId) {
       navigate('/chat');
@@ -113,7 +131,7 @@ export default function Chat() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-8rem)] lg:h-[calc(100vh-4rem)] -m-4 sm:-m-6 lg:-m-8">
+    <div className="flex h-[calc(100vh-8rem)] lg:h-screen -m-4 sm:-m-6 lg:-m-8">
       <div className={`w-full lg:w-80 lg:flex-shrink-0 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 ${showThreadMobile && activeConversationId ? 'hidden lg:flex' : 'flex'} flex-col`}>
         <ConversationList
           conversations={conversations}
@@ -123,11 +141,13 @@ export default function Chat() {
           onSelect={handleSelect}
           onNewConversation={() => setShowNewModal(true)}
           onDelete={handleDelete}
+          onMarkRead={handleMarkConversationRead}
         />
       </div>
       <div className={`flex-1 ${!showThreadMobile && !activeConversationId ? 'hidden lg:flex' : 'flex'} flex-col`}>
         <MessageThread
           conversation={activeConversation}
+          activeConversationId={activeConversationId}
           messages={messages}
           typingUsers={activeTyping}
           currentUserId={user?.id}
@@ -146,6 +166,13 @@ export default function Chat() {
         open={showNewModal}
         onClose={() => setShowNewModal(false)}
         onCreate={handleCreate}
+      />
+      <ConfirmDialog
+        open={deleteConvId !== null}
+        title="Delete Chat"
+        message="Delete this chat? This will remove it from your list."
+        onConfirm={confirmDeleteConversation}
+        onCancel={() => setDeleteConvId(null)}
       />
     </div>
   );

@@ -16,14 +16,7 @@ import Profile from './pages/Profile';
 import Chat from './pages/Chat';
 
 function PublicRoute({ children }) {
-  const { user, loading } = useAuth();
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>
-      </div>
-    );
-  }
+  const { user } = useAuth();
   if (user) {
     return <Navigate to={['admin', 'super_admin'].includes(user.role) ? '/admin' : '/dashboard'} replace />;
   }

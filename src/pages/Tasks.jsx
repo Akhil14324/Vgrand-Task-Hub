@@ -4,6 +4,7 @@ import { useLang } from '../context/LanguageContext';
 import { useLocation } from 'react-router-dom';
 import api from '../api/client';
 import Modal from '../components/Modal';
+import ConfirmDialog from '../components/ConfirmDialog';
 import { Plus, CheckCircle, Circle, AlertTriangle, Calendar, Filter, Trash2, Pencil, Pause, Play } from 'lucide-react';
 
 export default function Tasks() {
@@ -162,8 +163,15 @@ export default function Tasks() {
     }
   };
 
-  const handleDelete = async (taskId) => {
-    if (!confirm(t('deleteTaskConfirm'))) return;
+  const [deleteTaskId, setDeleteTaskId] = useState(null);
+
+  const handleDelete = (taskId) => {
+    setDeleteTaskId(taskId);
+  };
+
+  const confirmDeleteTask = async () => {
+    const taskId = deleteTaskId;
+    setDeleteTaskId(null);
     try {
       await api.delete(`/tasks/${taskId}`);
       await fetchTasks();
@@ -256,9 +264,9 @@ export default function Tasks() {
     if (!task.created_at) return 'bg-white dark:bg-gray-800';
     const hours = (Date.now() - new Date(task.created_at).getTime()) / 36e5;
     if (hours < 24) return 'bg-white dark:bg-gray-800';
-    if (hours < 48) return 'bg-green-200 dark:bg-green-900/50';
-    if (hours < 72) return 'bg-orange-200 dark:bg-orange-900/50';
-    return 'bg-red-200 dark:bg-red-900/50';
+    if (hours < 48) return 'bg-green-100 dark:bg-green-900/50';
+    if (hours < 72) return 'bg-orange-100 dark:bg-orange-900/50';
+    return 'bg-red-100 dark:bg-red-900/50';
   };
 
   if (loading && tasks.length === 0) {
@@ -504,7 +512,7 @@ export default function Tasks() {
                     </td>
                     <td className="px-4 py-3 text-gray-600 dark:text-gray-300">
                       {task.due_date ? (
-                        <span className={isOverdue(task) ? 'text-red-600 font-medium' : ''}>
+                        <span className={isOverdue(task) ? 'text-red-700 dark:text-red-400 font-bold' : ''}>
                           {formatDate(task.due_date)}
                           {isOverdue(task) && ` (${t('overdue')})`}
                         </span>
@@ -741,6 +749,13 @@ export default function Tasks() {
           </div>
         </form>
       </Modal>
+      <ConfirmDialog
+        open={deleteTaskId !== null}
+        title={t('delete')}
+        message={t('deleteTaskConfirm')}
+        onConfirm={confirmDeleteTask}
+        onCancel={() => setDeleteTaskId(null)}
+      />
     </div>
   );
 }

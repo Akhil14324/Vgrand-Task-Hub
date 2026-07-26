@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import ConversationListItem from './ConversationListItem';
 import { MessageSquare, Plus } from 'lucide-react';
 import { useLang } from '../../context/LanguageContext';
@@ -10,8 +11,21 @@ export default function ConversationList({
   onSelect,
   onNewConversation,
   onDelete,
+  onMarkRead,
 }) {
-  const { t } = useLang();
+  const { t, lang, translateDynamic } = useLang();
+
+  useEffect(() => {
+    if (lang === 'en') return;
+    const texts = [];
+    conversations.forEach((conv) => {
+      if (conv.type === 'group' && conv.name) texts.push(conv.name);
+      conv.participants?.forEach((p) => { if (p.name) texts.push(p.name); });
+      if (conv.last_message?.body) texts.push(conv.last_message.body);
+    });
+    const unique = [...new Set(texts)];
+    if (unique.length > 0) translateDynamic(unique);
+  }, [conversations, lang, translateDynamic]);
   if (conversations.length === 0) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
@@ -50,6 +64,7 @@ export default function ConversationList({
             isActive={conv.id === activeConversationId}
             onClick={() => onSelect(conv.id)}
             onDelete={onDelete}
+            onMarkRead={onMarkRead}
           />
         ))}
       </div>

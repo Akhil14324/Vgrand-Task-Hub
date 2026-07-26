@@ -1,19 +1,25 @@
-import { Users, Trash2 } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Users, MoreVertical, Trash2, CheckCheck } from 'lucide-react';
 import { useLang } from '../../context/LanguageContext';
 
-export default function ConversationListItem({ conversation, currentUserId, onlineUsers, isActive, onClick, onDelete }) {
-  const { t, lang } = useLang();
+export default function ConversationListItem({ conversation, currentUserId, onlineUsers, isActive, onClick, onDelete, onMarkRead }) {
+  const { t, lang, getDynamic } = useLang();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
   const isGroup = conversation.type === 'group';
-  const title =
+  const rawTitle =
     isGroup
       ? conversation.name
-      : conversation.participants?.find((p) => p.id !== currentUserId)?.name || t('unknown');
+      : conversation.participants?.find((p) => String(p.id) !== String(currentUserId))?.name;
+  const title = rawTitle ? getDynamic(rawTitle) : t('unknown');
 
   const lastMsg = conversation.last_message;
   const preview = lastMsg
     ? lastMsg.deleted_at
       ? t('messageDeleted')
-      : lastMsg.body || (lastMsg.attachment_url ? `[${t('attachment')}]` : '')
+      : lastMsg.body
+        ? getDynamic(lastMsg.body)
+        : (lastMsg.attachment_url ? `[${t('attachment')}]` : '')
     : t('noMessagesYet');
 
   const lastMsgTime = lastMsg?.created_at
@@ -21,9 +27,30 @@ export default function ConversationListItem({ conversation, currentUserId, onli
     : '';
 
   const otherParticipant = !isGroup
-    ? conversation.participants?.find((p) => p.id !== currentUserId)
+    ? conversation.participants?.find((p) => String(p.id) !== String(currentUserId))
     : null;
   const isOnline = otherParticipant && onlineUsers.has(otherParticipant.id);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handleClick = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [menuOpen]);
+
+  const handleMenuClick = (e, action) => {
+    e.stopPropagation();
+    setMenuOpen(false);
+    if (action === 'delete') onDelete?.(conversation.id);
+    if (action === 'markRead') onMarkRead?.(conversation.id);
+  };
+
+  const hasUnread = conversation.unread_count > 0;
+  const canMarkRead = hasUnread && onMarkRead;
 
   return (
     <div
@@ -53,32 +80,53 @@ export default function ConversationListItem({ conversation, currentUserId, onli
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2">
-          <span className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">{title}</span>
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <span className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">{title}</span>
+            {hasUnread && (
+              <span className="flex-shrink-0 bg-brand-600 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                {conversation.unread_count > 99 ? '99+' : conversation.unread_count}
+              </span>
+            )}
+          </div>
           {lastMsgTime && (
             <span className="text-[10px] text-gray-400 dark:text-gray-500 flex-shrink-0">{lastMsgTime}</span>
           )}
         </div>
         <div className="flex items-center justify-between gap-2 mt-0.5">
           <span className="text-xs text-gray-500 dark:text-gray-400 truncate">{preview}</span>
-          {onDelete && (
+          <div className="relative" ref={menuRef}>
             <button
               type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete(conversation.id);
-              }}
-              className="p-1.5 rounded text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-              title={t('deleteChat')}
-              aria-label={t('deleteChat')}
+              onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v); }}
+              className="p-1.5 rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              title={t('chatOptions')}
+              aria-label={t('chatOptions')}
             >
-              <Trash2 size={14} />
+              <MoreVertical size={16} />
             </button>
-          )}
-          {conversation.unread_count > 0 && (
-            <span className="flex-shrink-0 bg-brand-600 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
-              {conversation.unread_count > 99 ? '99+' : conversation.unread_count}
-            </span>
-          )}
+            {menuOpen && (
+              <div className="absolute right-0 top-7 z-30 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1">
+                {canMarkRead && (
+                  <button
+                    type="button"
+                    onClick={(e) => handleMenuClick(e, 'markRead')}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 text-left"
+                  >
+                    <CheckCheck size={14} /> {t('markAsRead')}
+                  </button>
+                )}
+                {onDelete && (
+                  <button
+                    type="button"
+                    onClick={(e) => handleMenuClick(e, 'delete')}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 text-left"
+                  >
+                    <Trash2 size={14} /> {t('delete')}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

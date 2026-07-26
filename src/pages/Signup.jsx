@@ -12,7 +12,7 @@ export default function Signup() {
   const { lang, toggleLang, t, translating } = useLang();
   const navigate = useNavigate();
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -23,7 +23,7 @@ export default function Signup() {
     e.preventDefault();
     setError('');
 
-    if (!name || !email || !password) {
+    if (!name || !username || !password) {
       setError(t('allFieldsRequired'));
       return;
     }
@@ -50,7 +50,7 @@ export default function Signup() {
 
     setLoading(true);
     try {
-      const res = await api.post('/auth/signup', { name, email, password });
+      const res = await api.post('/auth/signup', { name, username, password });
       login(res.data.token, res.data.user);
       navigate('/dashboard');
     } catch (err) {
@@ -110,14 +110,14 @@ export default function Signup() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('email')}</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('username')}</label>
               <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 className="input"
-                placeholder={t('emailPlaceholder')}
-                autoComplete="email"
+                placeholder={t('usernamePlaceholder')}
+                autoComplete="username"
               />
             </div>
 

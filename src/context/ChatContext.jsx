@@ -20,6 +20,7 @@ export function ChatProvider({ children }) {
   const messagesRef = useRef([]);
   const conversationsRef = useRef([]);
   const activeConversationIdRef = useRef(null);
+  const deletedMessageIdsRef = useRef(new Set());
 
   useEffect(() => { messagesRef.current = messages; }, [messages]);
   useEffect(() => { conversationsRef.current = conversations; }, [conversations]);
@@ -30,8 +31,8 @@ export function ChatProvider({ children }) {
       const res = await api.get('/chat/conversations');
       setConversations(res.data.conversations);
       setTotalUnread(res.data.total_unread);
-    } catch {
-      // ignore
+    } catch (err) {
+      console.error('[chat] fetchConversations error:', err.response?.status, err.message);
     }
   }, []);
 
@@ -51,7 +52,7 @@ export function ChatProvider({ children }) {
 
     const socket = io(SOCKET_URL, {
       auth: { token },
-      transports: ['websocket', 'polling'],
+      transports: ['polling', 'websocket'],
     });
     socketRef.current = socket;
 
@@ -64,9 +65,18 @@ export function ChatProvider({ children }) {
       setConnected(false);
     });
 
-    socket.on('connect_error', () => {
+    socket.on('connect_error', (err) => {
+      console.error('[chat] socket connect_error:', err.message);
       setConnected(false);
     });
+
+    // Fallback: fetch conversations via REST if socket doesn't connect within 3s
+    const fallbackTimer = setTimeout(() => {
+      if (!socket.connected) {
+        console.warn('[chat] Socket not connected after 3s, fetching conversations via REST');
+        fetchConversations();
+      }
+    }, 3000);
 
     socket.on('message:new', (msg) => {
       const normalized = {
@@ -76,8 +86,10 @@ export function ChatProvider({ children }) {
         senderId: Number(msg.senderId),
         readBy: msg.readBy || [],
       };
+      const isActive = normalized.conversationId === Number(activeConversationIdRef.current);
+
       setMessages((prev) => {
-        if (prev.some((m) => m.id === normalized.id)) return prev;
+        if (!isActive || prev.some((m) => m.id === normalized.id)) return prev;
         return [...prev, normalized];
       });
 
@@ -94,15 +106,17 @@ export function ChatProvider({ children }) {
                   sender_id: normalized.senderId,
                   created_at: normalized.createdAt,
                 },
-                unread_count: normalized.senderId === user.id ? c.unread_count : c.unread_count + 1,
+                unread_count: isActive || normalized.senderId === user.id ? 0 : c.unread_count + 1,
               }
             : c
         )
       );
 
       if (normalized.senderId !== user.id) {
-        setTotalUnread((prev) => prev + 1);
-        if (!document.hasFocus() || normalized.conversationId !== activeConversationIdRef.current) {
+        if (!isActive) {
+          setTotalUnread((prev) => prev + 1);
+        }
+        if (!document.hasFocus() || !isActive) {
           window.dispatchEvent(new CustomEvent('chat:new-message', { detail: normalized }));
         }
       }
@@ -143,21 +157,43 @@ export function ChatProvider({ children }) {
     });
 
     socket.on('message:deleted', (data) => {
-      const { conversationId, messageId, deletedAt } = data;
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === messageId
-            ? { ...m, deletedAt, body: null, attachmentUrl: null, attachmentType: null }
-            : m
-        )
-      );
-      setConversations((prev) =>
-        prev.map((c) =>
-          c.id === conversationId && c.last_message?.id === messageId
-            ? { ...c, last_message: { ...c.last_message, deleted_at: deletedAt, body: null } }
-            : c
-        )
-      );
+      const { conversationId, messageId, deletedAt, permanent } = data;
+      if (permanent) {
+        // Hard delete — remove message from state entirely
+        setMessages((prev) => prev.filter((m) => m.id !== messageId));
+        setConversations((prev) =>
+          prev.map((c) =>
+            c.id === conversationId && c.last_message?.id === messageId
+              ? { ...c, last_message: null }
+              : c
+          )
+        );
+      } else {
+        // Soft delete — mark as deleted
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === messageId
+              ? { ...m, deletedAt, body: null, attachmentUrl: null, attachmentType: null }
+              : m
+          )
+        );
+        setConversations((prev) =>
+          prev.map((c) =>
+            c.id === conversationId && c.last_message?.id === messageId
+              ? { ...c, last_message: { ...c.last_message, deleted_at: deletedAt, body: null } }
+              : c
+          )
+        );
+      }
+    });
+
+    socket.on('conversation:deleted', (data) => {
+      const { conversationId } = data;
+      setConversations((prev) => prev.filter((c) => c.id !== conversationId));
+      if (activeConversationIdRef.current === conversationId) {
+        setActiveConversationId(null);
+        setMessages([]);
+      }
     });
 
     socket.on('conversation:updated', (data) => {
@@ -183,6 +219,7 @@ export function ChatProvider({ children }) {
     });
 
     return () => {
+      clearTimeout(fallbackTimer);
       socket.disconnect();
       socketRef.current = null;
       setConnected(false);
@@ -202,27 +239,30 @@ export function ChatProvider({ children }) {
       const params = { limit: 30 };
       if (before) params.before = before;
       const res = await api.get(`/chat/conversations/${conversationId}/messages`, { params });
-      const normalized = (res.data.messages || []).map((m) => ({
-        ...m,
-        id: Number(m.id),
-        conversationId: Number(m.conversation_id ?? m.conversationId),
-        senderId: Number(m.sender_id ?? m.senderId),
-        senderName: m.sender_name ?? m.senderName ?? 'Unknown',
-        body: m.body,
-        attachmentUrl: m.attachment_url ?? m.attachmentUrl,
-        attachmentType: m.attachment_type ?? m.attachmentType,
-        createdAt: m.created_at ?? m.createdAt,
-        editedAt: m.edited_at ?? m.editedAt,
-        deletedAt: m.deleted_at ?? m.deletedAt,
-        readBy: m.readBy || [],
-      }));
+      const normalized = (res.data.messages || [])
+        .filter((m) => !deletedMessageIdsRef.current.has(Number(m.id)))
+        .map((m) => ({
+          ...m,
+          id: Number(m.id),
+          conversationId: Number(m.conversation_id ?? m.conversationId),
+          senderId: Number(m.sender_id ?? m.senderId),
+          senderName: m.sender_name ?? m.senderName ?? 'Unknown',
+          body: m.body,
+          attachmentUrl: m.attachment_url ?? m.attachmentUrl,
+          attachmentType: m.attachment_type ?? m.attachmentType,
+          createdAt: m.created_at ?? m.createdAt,
+          editedAt: m.edited_at ?? m.editedAt,
+          deletedAt: m.deleted_at ?? m.deletedAt,
+          readBy: m.readBy || [],
+        }));
       if (before) {
         setMessages((prev) => [...normalized, ...prev]);
       } else {
         setMessages(normalized);
       }
       return res.data.has_more;
-    } catch {
+    } catch (err) {
+      console.error('[chat] loadMessages error:', err.response?.status, err.message);
       return false;
     }
   }, []);
@@ -234,7 +274,8 @@ export function ChatProvider({ children }) {
       });
       setMessages((prev) => {
         const existingIds = new Set(prev.map((m) => m.id));
-        const newMsgs = res.data.messages.filter((m) => !existingIds.has(m.id));
+        const newMsgs = res.data.messages
+          .filter((m) => !existingIds.has(m.id) && !deletedMessageIdsRef.current.has(Number(m.id)));
         return [...prev, ...newMsgs];
       });
     } catch {
@@ -292,23 +333,26 @@ export function ChatProvider({ children }) {
 
   const createConversation = useCallback(async (type, participantIds, name, businessId) => {
     const res = await api.post('/chat/conversations', { type, participantIds, name, businessId });
+    const conv = res.data.conversation;
+    setConversations((prev) => {
+      if (prev.some((c) => c.id === conv.id)) return prev;
+      return [conv, ...prev];
+    });
     await fetchConversations();
-    return res.data.conversation;
+    return conv;
   }, [fetchConversations]);
 
   const deleteMessage = useCallback(async (messageId, scope) => {
-    if (scope === 'me') {
-      setMessages((prev) => prev.filter((m) => m.id !== messageId));
-    } else {
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === messageId
-            ? { ...m, deletedAt: new Date().toISOString(), body: null, attachmentUrl: null, attachmentType: null }
-            : m
-        )
-      );
+    // Track the deleted message ID so it doesn't reappear on re-fetch
+    deletedMessageIdsRef.current.add(Number(messageId));
+    setMessages((prev) => prev.filter((m) => m.id !== Number(messageId)));
+    try {
+      await api.delete(`/chat/messages/${messageId}`, { params: { scope } });
+    } catch (err) {
+      // If the API call fails, remove the ID from the deleted set so it can reappear
+      deletedMessageIdsRef.current.delete(Number(messageId));
+      throw err;
     }
-    await api.delete(`/chat/messages/${messageId}`, { params: { scope } });
     fetchConversations();
   }, [fetchConversations]);
 

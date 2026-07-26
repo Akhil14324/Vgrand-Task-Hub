@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
 import Modal from '../components/Modal';
 import {
-  LogOut, Building2, Mail, Shield, ShieldAlert, ShieldOff, User as UserIcon,
+  LogOut, Building2, Circle, Shield, ShieldAlert, ShieldOff, User as UserIcon,
   CheckCircle2, Clock, AlertTriangle, Calendar, Pencil, Lock, TrendingUp,
 } from 'lucide-react';
 
@@ -344,11 +344,11 @@ export default function Profile() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-              <Mail size={16} className="text-gray-400" />
+              <UserIcon size={16} className="text-gray-400" />
             </div>
             <div className="min-w-0">
-              <p className="text-xs text-gray-400">{t('email')}</p>
-              <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{user?.email}</p>
+              <p className="text-xs text-gray-400">{t('username')}</p>
+              <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{user?.username}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -371,7 +371,7 @@ export default function Profile() {
           </div>
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-              <UserIcon size={16} className="text-gray-400" />
+              <Circle size={16} className="text-gray-400" />
             </div>
             <div className="min-w-0">
               <p className="text-xs text-gray-400">{t('statusLabel')}</p>

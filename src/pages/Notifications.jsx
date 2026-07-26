@@ -9,6 +9,7 @@ const NOTIFICATION_ICONS = {
   task_added: { icon: CheckSquare, color: 'text-green-600', bg: 'bg-green-50' },
   user_joined: { icon: UserPlus, color: 'text-blue-600', bg: 'bg-blue-50' },
   task_completed: { icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-50' },
+  overdue: { icon: AlertTriangle, color: 'text-red-600', bg: 'bg-red-50' },
 };
 
 const NOTIFICATION_LABELS = {
@@ -17,6 +18,7 @@ const NOTIFICATION_LABELS = {
   task_added: 'newTask',
   user_joined: 'newUser',
   task_completed: 'taskCompleted',
+  overdue: 'overdue',
 };
 
 export default function Notifications() {

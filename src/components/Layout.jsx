@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useLang } from '../context/LanguageContext';
@@ -13,6 +13,8 @@ export default function Layout({ children }) {
   const { lang, toggleLang, t, translating, getDynamic } = useLang();
   const { totalUnread: chatUnread } = useChat();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isChat = location.pathname.startsWith('/chat');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -165,11 +167,11 @@ export default function Layout({ children }) {
             </NavLink>
           ))}
         </nav>
-        <div className="p-3 border-t border-gray-200 dark:border-gray-700">
+        <div className="px-3 pt-3 pb-1 border-t border-gray-200 dark:border-gray-700">
           <NavLink
             to="/profile"
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+              `flex items-center gap-1.5 px-3 py-2.5 rounded-lg transition-colors ${
                 isActive ? 'bg-brand-50 dark:bg-brand-900/30' : 'hover:bg-gray-100 dark:hover:bg-gray-700'
               }`
             }
@@ -181,23 +183,20 @@ export default function Layout({ children }) {
               <span className={`absolute bottom-0 right-0 block w-2.5 h-2.5 rounded-full border-2 border-white dark:border-gray-800 ${STATUS_DOT[user?.status] || STATUS_DOT.inactive}`}></span>
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5">
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{getDynamic(user?.name)}</p>
-              </div>
+              <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{getDynamic(user?.name)}</p>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span className={`badge text-[10px] leading-none ${ROLE_AVATAR[user?.role] || ROLE_AVATAR.user}`}>
                   {ROLE_LABEL[user?.role] || t('user')}
                 </span>
               </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">{user?.email}</p>
             </div>
           </NavLink>
 
-          <div className="my-2 border-t border-gray-100 dark:border-gray-700" />
+          <div className="my-1 border-t border-gray-100 dark:border-gray-700" />
 
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 w-full"
+            className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 w-full"
           >
             <LogOut size={20} />
             {t('logout')}
@@ -230,7 +229,7 @@ export default function Layout({ children }) {
       </header>
 
       {/* Main Content */}
-      <main className="lg:ml-64 pb-20 lg:pb-8 min-h-screen">
+      <main className={`lg:ml-64 pb-20 min-h-screen ${isChat ? 'lg:pb-0' : 'lg:pb-8'}`}>
         <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
           {children}
         </div>

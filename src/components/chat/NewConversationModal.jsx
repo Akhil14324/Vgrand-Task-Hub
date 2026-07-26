@@ -31,8 +31,8 @@ export default function NewConversationModal({ open, onClose, onCreate }) {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const res = await api.get('/users');
-      const allUsers = (res.data.users || res.data || []).filter((u) => u.id !== user.id);
+      const res = await api.get('/chat/users');
+      const allUsers = res.data.users || res.data || [];
       setUsers(allUsers);
     } catch {
       setError(t('failedLoadUsers'));
@@ -41,9 +41,11 @@ export default function NewConversationModal({ open, onClose, onCreate }) {
     }
   };
 
-  const filtered = users.filter((u) =>
+  const availableUsers = users.filter((u) => String(u.id) !== String(user?.id));
+
+  const filtered = availableUsers.filter((u) =>
     u.name?.toLowerCase().includes(search.toLowerCase()) ||
-    u.email?.toLowerCase().includes(search.toLowerCase())
+    u.username?.toLowerCase().includes(search.toLowerCase())
   );
 
   const toggleSelect = (userId) => {
@@ -55,7 +57,13 @@ export default function NewConversationModal({ open, onClose, onCreate }) {
   };
 
   const handleCreate = async () => {
-    if (selected.length === 0) {
+    const recipients = selected.filter((id) => String(id) !== String(user?.id));
+
+    if (recipients.length === 0) {
+      setError(t('selectAtLeastOneUser'));
+      return;
+    }
+    if (chatType === 'direct' && recipients.length !== 1) {
       setError(t('selectAtLeastOneUser'));
       return;
     }
@@ -63,12 +71,12 @@ export default function NewConversationModal({ open, onClose, onCreate }) {
       setError(t('groupNameRequired'));
       return;
     }
-    if (chatType === 'group' && selected.length < 2) {
+    if (chatType === 'group' && recipients.length < 2) {
       setError(t('groupNeedsParticipants'));
       return;
     }
     try {
-      await onCreate(chatType, selected, groupName.trim() || undefined);
+      await onCreate(chatType, recipients, groupName.trim() || undefined);
       onClose();
     } catch (err) {
       setError(err.response?.data?.error || t('failedCreateConversation'));
@@ -151,7 +159,7 @@ export default function NewConversationModal({ open, onClose, onCreate }) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{u.name}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{u.email}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{u.username}</p>
                 </div>
                 {selected.includes(u.id) && (
                   <Check size={18} className="text-brand-600 flex-shrink-0" />

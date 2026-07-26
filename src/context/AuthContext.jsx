@@ -3,22 +3,35 @@ import api from '../api/client';
 
 const AuthContext = createContext(null);
 
+function getStoredUser() {
+  try {
+    const token = sessionStorage.getItem('token');
+    if (!token) return null;
+    const stored = sessionStorage.getItem('user');
+    return stored ? JSON.parse(stored) : null;
+  } catch {
+    return null;
+  }
+}
+
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(getStoredUser);
 
   const fetchMe = useCallback(async () => {
     const token = sessionStorage.getItem('token');
     if (!token) {
-      setLoading(false);
       setUser(null);
       return;
     }
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
     try {
-      const res = await api.get('/auth/me');
+      const res = await api.get('/auth/me', { signal: controller.signal });
       setUser(res.data.user);
     } catch (err) {
-      if (err.response?.status === 401) {
+      if (err.code === 'ERR_CANCELED' || err.name === 'CanceledError' || err.name === 'AbortError') {
+        console.warn('[auth] session validation timed out');
+      } else if (err.response?.status === 401) {
         sessionStorage.removeItem('token');
         sessionStorage.removeItem('user');
         setUser(null);
@@ -26,7 +39,7 @@ export function AuthProvider({ children }) {
         console.error('[auth] fetchMe error:', err.message);
       }
     } finally {
-      setLoading(false);
+      clearTimeout(timeoutId);
     }
   }, []);
 
@@ -57,7 +70,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, refreshUser: fetchMe }}>
+    <AuthContext.Provider value={{ user, login, logout, refreshUser: fetchMe }}>
       {children}
     </AuthContext.Provider>
   );

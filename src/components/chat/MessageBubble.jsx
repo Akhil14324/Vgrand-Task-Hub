@@ -5,9 +5,10 @@ import { useLang } from '../../context/LanguageContext';
 const DELETE_WINDOW_MS = 15 * 60 * 1000;
 
 export default function MessageBubble({ message, isOwn, showAvatar, readBy, participants, onDeleteMessage }) {
-  const { t, lang } = useLang();
+  const { t, lang, getDynamic } = useLang();
   const isDeleted = !!(message.deletedAt || message.deleted_at);
-  const displayName = message.senderName || message.sender_name || t('unknown');
+  const senderName = message.senderName || message.sender_name;
+  const displayName = senderName ? getDynamic(senderName) : t('unknown');
   const createdAt = message.createdAt || message.created_at;
   const [showMenu, setShowMenu] = useState(false);
   const [showConfirm, setShowConfirm] = useState(null);
@@ -133,7 +134,7 @@ export default function MessageBubble({ message, isOwn, showAvatar, readBy, part
             <span className="italic opacity-60">{t('messageDeleted')}</span>
           ) : (
             <>
-              {message.body && <p className="whitespace-pre-wrap">{message.body}</p>}
+              {message.body && <p className="whitespace-pre-wrap">{getDynamic(message.body)}</p>}
               {message.attachmentUrl && message.attachmentType?.startsWith('image/') && (
                 <img
                   src={message.attachmentUrl}

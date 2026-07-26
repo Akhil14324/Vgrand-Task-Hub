@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLang } from '../context/LanguageContext';
 import api from '../api/client';
 import Modal from '../components/Modal';
+import ConfirmDialog from '../components/ConfirmDialog';
 import { Shield, Users as UsersIcon, Key, ArrowUpCircle, ArrowDownCircle, Trash2, Crown } from 'lucide-react';
 
 function roleBadgeClass(role) {
@@ -48,18 +49,19 @@ function UserTable({ users, title, icon: Icon, color, onOpenPwModal, onOpenRoleM
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-gray-900 dark:text-gray-100 truncate">{getDynamic(u.name)}</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{u.email}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 truncate">@{u.username}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{u.email}</p>
                   </div>
                   <span className={`badge ${roleBadgeClass(u.role)}`}>{roleLabel(u.role)}</span>
                 </div>
-                <div className="flex items-center justify-center gap-4 pt-2 mt-2 border-t border-gray-100 dark:border-gray-700">
+                <div className="flex items-start justify-center gap-4 pt-2 mt-2 border-t border-gray-100 dark:border-gray-700">
                   {!isSuperAdminSection && (
                     <button
                       onClick={() => onOpenPwModal(u)}
                       className="flex flex-col items-center gap-0.5 text-xs text-gray-600 hover:text-brand-600 touch-target"
                     >
                       <Key size={16} />
-                      <span>{t('changePassword')}</span>
+                      <span className="text-center whitespace-nowrap">{t('changePassword')}</span>
                     </button>
                   )}
                   {!isSuperAdminSection && u.role === 'user' && (
@@ -68,7 +70,7 @@ function UserTable({ users, title, icon: Icon, color, onOpenPwModal, onOpenRoleM
                       className="flex flex-col items-center gap-0.5 text-xs text-green-600 hover:text-green-700 touch-target"
                     >
                       <ArrowUpCircle size={16} />
-                      <span>{t('promote')}</span>
+                      <span className="text-center whitespace-nowrap">{t('promote')}</span>
                     </button>
                   )}
                   {!isSuperAdminSection && u.role === 'admin' && (
@@ -77,7 +79,7 @@ function UserTable({ users, title, icon: Icon, color, onOpenPwModal, onOpenRoleM
                       className="flex flex-col items-center gap-0.5 text-xs text-red-600 hover:text-red-700 touch-target"
                     >
                       <ArrowDownCircle size={16} />
-                      <span>{t('demote')}</span>
+                      <span className="text-center whitespace-nowrap">{t('demote')}</span>
                     </button>
                   )}
                   {!isSuperAdminSection && (
@@ -86,7 +88,7 @@ function UserTable({ users, title, icon: Icon, color, onOpenPwModal, onOpenRoleM
                       className="flex flex-col items-center gap-0.5 text-xs text-gray-500 hover:text-red-600 touch-target"
                     >
                       <Trash2 size={16} />
-                      <span>{t('delete')}</span>
+                      <span className="text-center whitespace-nowrap">{t('delete')}</span>
                     </button>
                   )}
                 </div>
@@ -96,34 +98,34 @@ function UserTable({ users, title, icon: Icon, color, onOpenPwModal, onOpenRoleM
 
           {/* Desktop: Table */}
           <div className="hidden lg:block card overflow-hidden p-0">
-            <table className="w-full">
+            <table className="w-full table-fixed">
               <thead className="bg-gray-50 border-b border-gray-200 dark:bg-gray-700 dark:border-gray-600">
                 <tr>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300">{t('username')}</th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300">{t('email')}</th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300">{t('role')}</th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300">{t('joined')}</th>
-                  <th className="text-center px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300 w-48">{t('action')}</th>
+                  <th className="text-center px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300 w-[16%]">{t('username')}</th>
+                  <th className="text-center px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300 w-[28%]">{t('email')}</th>
+                  <th className="text-center px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300 w-[12%]">{t('role')}</th>
+                  <th className="text-center px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300 w-[16%]">{t('joined')}</th>
+                  <th className="text-center px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300 w-[28%]">{t('action')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {users.map((u) => (
                   <tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                    <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{getDynamic(u.name)}</td>
-                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{u.email}</td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 text-center font-medium text-gray-900 dark:text-gray-100">{u.username}</td>
+                    <td className="px-4 py-3 text-center text-gray-600 dark:text-gray-400 break-all">{u.email}</td>
+                    <td className="px-4 py-3 text-center">
                       <span className={`badge ${roleBadgeClass(u.role)}`}>{roleLabel(u.role)}</span>
                     </td>
-                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400 text-sm">{formatDate(u.created_at)}</td>
+                    <td className="px-4 py-3 text-center text-gray-500 dark:text-gray-400 text-sm">{formatDate(u.created_at)}</td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center justify-center gap-3">
+                      <div className="flex items-start justify-center gap-3">
                         {!isSuperAdminSection && (
                           <button
                             onClick={() => onOpenPwModal(u)}
                             className="flex flex-col items-center gap-0.5 text-xs text-gray-600 hover:text-brand-600 touch-target"
                           >
                             <Key size={16} />
-                            <span>{t('changePassword')}</span>
+                            <span className="text-center whitespace-nowrap">{t('changePassword')}</span>
                           </button>
                         )}
                         {!isSuperAdminSection && u.role === 'user' && (
@@ -132,7 +134,7 @@ function UserTable({ users, title, icon: Icon, color, onOpenPwModal, onOpenRoleM
                             className="flex flex-col items-center gap-0.5 text-xs text-green-600 hover:text-green-700 touch-target"
                           >
                             <ArrowUpCircle size={16} />
-                            <span>{t('promote')}</span>
+                            <span className="text-center whitespace-nowrap">{t('promote')}</span>
                           </button>
                         )}
                         {!isSuperAdminSection && u.role === 'admin' && (
@@ -141,7 +143,7 @@ function UserTable({ users, title, icon: Icon, color, onOpenPwModal, onOpenRoleM
                             className="flex flex-col items-center gap-0.5 text-xs text-red-600 hover:text-red-700 touch-target"
                           >
                             <ArrowDownCircle size={16} />
-                            <span>{t('demote')}</span>
+                            <span className="text-center whitespace-nowrap">{t('demote')}</span>
                           </button>
                         )}
                         {!isSuperAdminSection && (
@@ -150,7 +152,7 @@ function UserTable({ users, title, icon: Icon, color, onOpenPwModal, onOpenRoleM
                             className="flex flex-col items-center gap-0.5 text-xs text-gray-500 hover:text-red-600 touch-target"
                           >
                             <Trash2 size={16} />
-                            <span>{t('delete')}</span>
+                            <span className="text-center whitespace-nowrap">{t('delete')}</span>
                           </button>
                         )}
                       </div>
@@ -273,8 +275,16 @@ export default function SuperAdminUsers() {
     }
   };
 
-  const handleDeleteUser = async (userId, userName) => {
-    if (!confirm(t('deleteUserConfirmMsg').replace('{name}', userName))) return;
+  const [deleteUser, setDeleteUser] = useState(null);
+
+  const handleDeleteUser = (userId, userName) => {
+    setDeleteUser({ id: userId, name: userName });
+  };
+
+  const confirmDeleteUser = async () => {
+    const userId = deleteUser?.id;
+    setDeleteUser(null);
+    if (!userId) return;
     try {
       await api.delete(`/users/${userId}`);
       fetchUsers();
@@ -335,6 +345,7 @@ export default function SuperAdminUsers() {
           {selectedUser && (
             <div className="rounded-lg bg-gray-50 px-4 py-3 dark:bg-gray-700">
               <p className="font-medium text-gray-900 dark:text-gray-100">{getDynamic(selectedUser.name)}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">@{selectedUser.username}</p>
               <p className="text-sm text-gray-500 dark:text-gray-400">{selectedUser.email}</p>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{t('role')}: <span className="font-medium">{roleLabel(selectedUser.role)}</span></p>
             </div>
@@ -374,6 +385,7 @@ export default function SuperAdminUsers() {
           {roleModalUser && (
             <div className="rounded-lg bg-gray-50 px-4 py-3 mb-2 dark:bg-gray-700">
               <p className="font-medium text-gray-900 dark:text-gray-100">{getDynamic(roleModalUser.name)}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">@{roleModalUser.username}</p>
               <p className="text-sm text-gray-500 dark:text-gray-400">{roleModalUser.email}</p>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 {t('currentRole')}: <span className="font-medium">{roleLabel(roleModalUser.role)}</span>
@@ -400,6 +412,13 @@ export default function SuperAdminUsers() {
           </div>
         </form>
       </Modal>
+      <ConfirmDialog
+        open={deleteUser !== null}
+        title={t('deleteUser')}
+        message={deleteUser ? t('deleteUserConfirmMsg').replace('{name}', deleteUser.name) : ''}
+        onConfirm={confirmDeleteUser}
+        onCancel={() => setDeleteUser(null)}
+      />
     </div>
   );
 }

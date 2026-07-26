@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLang } from '../context/LanguageContext';
 import api from '../api/client';
 import Modal from '../components/Modal';
+import ConfirmDialog from '../components/ConfirmDialog';
 import { useAuth } from '../context/AuthContext';
 import { UserPlus, Users as UsersIcon, Building2, Mail, Shield, ArrowUpCircle, ArrowDownCircle, Trash2, Pencil } from 'lucide-react';
 
@@ -111,8 +112,16 @@ export default function AdminUsers() {
     }
   };
 
-  const handleDeleteUser = async (userId, userName) => {
-    if (!confirm(t('deleteUserConfirmMsg').replace('{name}', userName))) return;
+  const [deleteUser, setDeleteUser] = useState(null);
+
+  const handleDeleteUser = (userId, userName) => {
+    setDeleteUser({ id: userId, name: userName });
+  };
+
+  const confirmDeleteUser = async () => {
+    const userId = deleteUser?.id;
+    setDeleteUser(null);
+    if (!userId) return;
     try {
       await api.delete(`/users/${userId}`);
       fetchData();
@@ -184,7 +193,7 @@ export default function AdminUsers() {
                   <div className="flex items-start justify-between mb-3">
                     <div>
                       <p className="font-medium text-gray-900 dark:text-gray-100">{getDynamic(user.name)}</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{user.username}</p>
                     </div>
                     {statusBadge(user.status)}
                   </div>
@@ -211,7 +220,7 @@ export default function AdminUsers() {
                 <thead className="bg-gray-50 border-b border-gray-200 dark:bg-gray-700 dark:border-gray-600">
                   <tr>
                     <th className="text-left px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300">{t('name')}</th>
-                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300">{t('email')}</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300">{t('username')}</th>
                     <th className="text-left px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300">{t('statusLabel')}</th>
                     <th className="text-center px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300 w-32">{t('action')}</th>
                   </tr>
@@ -220,7 +229,7 @@ export default function AdminUsers() {
                   {unassigned.map((user) => (
                     <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                       <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{getDynamic(user.name)}</td>
-                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{user.email}</td>
+                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{user.username}</td>
                       <td className="px-4 py-3">{statusBadge(user.status)}</td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-center gap-2">
@@ -270,7 +279,7 @@ export default function AdminUsers() {
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-gray-900 dark:text-gray-100 truncate">{getDynamic(user.name)}</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{user.username}</p>
                     </div>
                     <div className="flex flex-col items-end gap-1 ml-2">
                       <span className={`badge ${roleBadgeClass(user.role)}`}>
@@ -304,7 +313,7 @@ export default function AdminUsers() {
                 <thead className="bg-gray-50 border-b border-gray-200 dark:bg-gray-700 dark:border-gray-600">
                   <tr>
                     <th className="text-left px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300">{t('name')}</th>
-                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300">{t('email')}</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300">{t('username')}</th>
                     <th className="text-left px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300">{t('role')}</th>
                     <th className="text-left px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300">{t('statusLabel')}</th>
                     <th className="text-center px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300 w-32">{t('action')}</th>
@@ -314,7 +323,7 @@ export default function AdminUsers() {
                   {adminUsers.map((user) => (
                     <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                       <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{getDynamic(user.name)}</td>
-                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{user.email}</td>
+                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{user.username}</td>
                       <td className="px-4 py-3">
                         <span className={`badge ${roleBadgeClass(user.role)}`}>
                           {roleLabel(user.role)}
@@ -373,7 +382,7 @@ export default function AdminUsers() {
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-gray-900 dark:text-gray-100 truncate">{getDynamic(user.name)}</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{user.username}</p>
                     </div>
                     <div className="flex flex-col items-end gap-1 ml-2">
                       <span className={`badge ${roleBadgeClass(user.role)}`}>
@@ -417,7 +426,7 @@ export default function AdminUsers() {
                 <thead className="bg-gray-50 border-b border-gray-200 dark:bg-gray-700 dark:border-gray-600">
                   <tr>
                     <th className="text-left px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300">{t('name')}</th>
-                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300">{t('email')}</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300">{t('username')}</th>
                     <th className="text-left px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300">{t('business')}</th>
                     <th className="text-left px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300">{t('statusLabel')}</th>
                     <th className="text-center px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300 w-32">{t('actions')}</th>
@@ -427,7 +436,7 @@ export default function AdminUsers() {
                   {regularUsers.map((user) => (
                     <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                       <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{getDynamic(user.name)}</td>
-                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{user.email}</td>
+                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{user.username}</td>
                       <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{user.businesses?.map((b) => getDynamic(b.name)).join(', ') || <span className="text-gray-400 italic">{t('unassigned')}</span>}</td>
                       <td className="px-4 py-3">{statusBadge(user.status)}</td>
                       <td className="px-4 py-3">
@@ -471,7 +480,7 @@ export default function AdminUsers() {
           {selectedUser && (
             <div className="rounded-lg bg-gray-50 px-4 py-3 mb-2 dark:bg-gray-700">
               <p className="font-medium text-gray-900 dark:text-gray-100">{getDynamic(selectedUser.name)}</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">{selectedUser.email}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{selectedUser.username}</p>
             </div>
           )}
           <div>
@@ -519,7 +528,7 @@ export default function AdminUsers() {
           {roleModalUser && (
             <div className="rounded-lg bg-gray-50 px-4 py-3 mb-2 dark:bg-gray-700">
               <p className="font-medium text-gray-900 dark:text-gray-100">{getDynamic(roleModalUser.name)}</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">{roleModalUser.email}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{roleModalUser.username}</p>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 {t('currentRole')}: <span className="font-medium">{roleLabel(roleModalUser.role)}</span>
               </p>
@@ -545,6 +554,13 @@ export default function AdminUsers() {
           </div>
         </form>
       </Modal>
+      <ConfirmDialog
+        open={deleteUser !== null}
+        title={t('deleteUser')}
+        message={deleteUser ? t('deleteUserConfirmMsg').replace('{name}', deleteUser.name) : ''}
+        onConfirm={confirmDeleteUser}
+        onCancel={() => setDeleteUser(null)}
+      />
     </div>
   );
 }

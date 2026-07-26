@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLang } from '../context/LanguageContext';
 import api from '../api/client';
 import Modal from '../components/Modal';
+import ConfirmDialog from '../components/ConfirmDialog';
 import { Plus, Pencil, Trash2, Building2 } from 'lucide-react';
 
 const DEFAULT_TYPES = [
@@ -127,8 +128,16 @@ export default function AdminBusinesses() {
     }
   };
 
-  const handleDelete = async (biz) => {
-    if (!confirm(t('deleteBusinessConfirm').replace('{name}', getDynamic(biz.name)))) return;
+  const [deleteBiz, setDeleteBiz] = useState(null);
+
+  const handleDelete = (biz) => {
+    setDeleteBiz(biz);
+  };
+
+  const confirmDeleteBiz = async () => {
+    const biz = deleteBiz;
+    setDeleteBiz(null);
+    if (!biz) return;
     try {
       await api.delete(`/businesses/${biz.id}`);
       fetchBusinesses();
@@ -311,6 +320,13 @@ export default function AdminBusinesses() {
           </div>
         </form>
       </Modal>
+      <ConfirmDialog
+        open={deleteBiz !== null}
+        title={t('delete')}
+        message={deleteBiz ? t('deleteBusinessConfirm').replace('{name}', getDynamic(deleteBiz.name)) : ''}
+        onConfirm={confirmDeleteBiz}
+        onCancel={() => setDeleteBiz(null)}
+      />
     </div>
   );
 }
