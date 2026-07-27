@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import ConversationListItem from './ConversationListItem';
-import { MessageSquare, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useLang } from '../../context/LanguageContext';
 
 export default function ConversationList({
@@ -26,21 +26,32 @@ export default function ConversationList({
     const unique = [...new Set(texts)];
     if (unique.length > 0) translateDynamic(unique);
   }, [conversations, lang, translateDynamic]);
-  if (conversations.length === 0) {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
-        <MessageSquare size={40} className="text-gray-300 dark:text-gray-600 mb-3" />
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{t('noConversations')}</p>
-        <button
-          onClick={onNewConversation}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 transition-colors"
-        >
-          <Plus size={18} />
-          {t('startAChat')}
-        </button>
-      </div>
-    );
-  }
+
+  const [activeTab, setActiveTab] = useState('users');
+  const tabs = useMemo(
+    () => [
+      { key: 'users', type: 'direct', label: t('users') },
+      { key: 'groups', type: 'group', label: t('groups') },
+    ],
+    [t]
+  );
+  const visibleConversations = useMemo(
+    () => conversations.filter((c) => c.type === tabs.find((tab) => tab.key === activeTab).type),
+    [conversations, activeTab, tabs]
+  );
+
+  const renderItem = (conv) => (
+    <ConversationListItem
+      key={conv.id}
+      conversation={conv}
+      currentUserId={currentUserId}
+      onlineUsers={onlineUsers}
+      isActive={conv.id === activeConversationId}
+      onClick={() => onSelect(conv.id)}
+      onDelete={onDelete}
+      onMarkRead={onMarkRead}
+    />
+  );
 
   return (
     <div className="flex-1 flex flex-col h-full">
@@ -54,19 +65,27 @@ export default function ConversationList({
           <Plus size={20} />
         </button>
       </div>
-      <div className="flex-1 overflow-y-auto p-2 space-y-1">
-        {conversations.map((conv) => (
-          <ConversationListItem
-            key={conv.id}
-            conversation={conv}
-            currentUserId={currentUserId}
-            onlineUsers={onlineUsers}
-            isActive={conv.id === activeConversationId}
-            onClick={() => onSelect(conv.id)}
-            onDelete={onDelete}
-            onMarkRead={onMarkRead}
-          />
+      <div className="flex gap-2 p-3 border-b border-gray-200 dark:border-gray-700">
+        {tabs.map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              activeTab === tab.key
+                ? 'bg-brand-600 text-white'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+            }`}
+          >
+            {tab.label}
+          </button>
         ))}
+      </div>
+      <div className="flex-1 overflow-y-auto p-2 space-y-1">
+        {visibleConversations.length === 0 ? (
+          <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-8">{t('noConversations')}</p>
+        ) : (
+          visibleConversations.map(renderItem)
+        )}
       </div>
     </div>
   );

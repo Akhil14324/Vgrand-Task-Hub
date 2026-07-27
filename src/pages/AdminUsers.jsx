@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useLang } from '../context/LanguageContext';
 import api from '../api/client';
 import Modal from '../components/Modal';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { useAuth } from '../context/AuthContext';
-import { UserPlus, Users as UsersIcon, Building2, Mail, Shield, ArrowUpCircle, ArrowDownCircle, Trash2, Pencil } from 'lucide-react';
+import { UserPlus, Users as UsersIcon, Building2, Mail, Shield, ArrowUpCircle, ArrowDownCircle, Trash2, Pencil, Check, Search } from 'lucide-react';
 
 export default function AdminUsers() {
   const { user: currentUser } = useAuth();
@@ -20,6 +20,7 @@ export default function AdminUsers() {
   const [selectedBusinessIds, setSelectedBusinessIds] = useState([]);
   const [assignError, setAssignError] = useState('');
   const [assigning, setAssigning] = useState(false);
+  const [assignSearch, setAssignSearch] = useState('');
   const [roleModalOpen, setRoleModalOpen] = useState(false);
   const [roleModalUser, setRoleModalUser] = useState(null);
   const [roleModalAction, setRoleModalAction] = useState(null);
@@ -62,6 +63,7 @@ export default function AdminUsers() {
   const openAssignModal = (user) => {
     setSelectedUser(user);
     setSelectedBusinessIds(user.businesses?.map((b) => b.id) || []);
+    setAssignSearch('');
     setAssignError('');
     setAssignModalOpen(true);
   };
@@ -150,6 +152,12 @@ export default function AdminUsers() {
 
   const adminUsers = allUsers.filter((u) => u.role === 'admin');
   const regularUsers = allUsers.filter((u) => u.role === 'user');
+
+  const filteredBusinesses = useMemo(() => {
+    const term = assignSearch.trim().toLowerCase();
+    if (!term) return businesses;
+    return businesses.filter((b) => getDynamic(b.name).toLowerCase().includes(term));
+  }, [businesses, assignSearch, lang, getDynamic]);
 
   if (loading) {
     return (
@@ -477,33 +485,66 @@ export default function AdminUsers() {
               {assignError}
             </div>
           )}
+
           {selectedUser && (
-            <div className="rounded-lg bg-gray-50 px-4 py-3 mb-2 dark:bg-gray-700">
-              <p className="font-medium text-gray-900 dark:text-gray-100">{getDynamic(selectedUser.name)}</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">{selectedUser.username}</p>
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-brand-50 dark:bg-gray-700/50 border border-brand-100 dark:border-gray-600">
+              <div className="h-10 w-10 rounded-full bg-brand-100 dark:bg-brand-900 flex items-center justify-center text-brand-700 dark:text-brand-300 font-semibold text-lg">
+                {(selectedUser.name?.charAt(0) || '?').toUpperCase()}
+              </div>
+              <div className="min-w-0">
+                <p className="font-semibold text-gray-900 dark:text-gray-100 truncate">{getDynamic(selectedUser.name)}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{selectedUser.username}</p>
+              </div>
             </div>
           )}
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('selectBusinessesMultiple')}</label>
-            <div className="max-h-48 overflow-y-auto space-y-2 rounded-lg border border-gray-200 dark:border-gray-600 p-3">
-              {businesses.map((biz) => (
-                <label key={biz.id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md px-2 py-1.5">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{t('selectBusinessesMultiple')}</label>
+            <div className="relative mb-2">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                value={assignSearch}
+                onChange={(e) => setAssignSearch(e.target.value)}
+                placeholder={t('search') || 'Search businesses...'}
+                className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 dark:text-gray-100"
+              />
+            </div>
+            <div className="max-h-56 overflow-y-auto rounded-xl border border-gray-200 dark:border-gray-600 divide-y divide-gray-100 dark:divide-gray-700">
+              {filteredBusinesses.map((biz) => (
+                <label key={biz.id} className="flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                  <div className={`flex items-center justify-center w-5 h-5 rounded border ${selectedBusinessIds.includes(biz.id) ? 'bg-brand-600 border-brand-600' : 'border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-800'}`}>
+                    {selectedBusinessIds.includes(biz.id) && <Check size={14} className="text-white" />}
+                  </div>
                   <input
                     type="checkbox"
                     checked={selectedBusinessIds.includes(biz.id)}
                     onChange={() => toggleBusinessSelection(biz.id)}
-                    className="rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+                    className="sr-only"
                   />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">{getDynamic(biz.name)}</span>
+                  <Building2 size={18} className="text-gray-400 flex-shrink-0" />
+                  <span className="text-sm text-gray-700 dark:text-gray-300 flex-1">{getDynamic(biz.name)}</span>
                 </label>
               ))}
+              {filteredBusinesses.length === 0 && (
+                <p className="p-3 text-sm text-gray-500 dark:text-gray-400 text-center">{t('noBusinessesFound') || 'No businesses found'}</p>
+              )}
             </div>
-            {selectedBusinessIds.length > 0 ? (
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">{selectedBusinessIds.length} {t('businessesSelected')}</p>
-            ) : (
-              <p className="text-xs text-amber-600 mt-1.5">{t('noBusinessesSelected')}</p>
-            )}
+            <div className="flex items-center justify-between mt-2">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {selectedBusinessIds.length} {selectedBusinessIds.length === 1 ? t('businessSelected') : t('businessesSelected')}
+              </p>
+              <button
+                type="button"
+                onClick={() => setSelectedBusinessIds([])}
+                className="text-xs text-red-600 hover:text-red-700 disabled:text-gray-400"
+                disabled={selectedBusinessIds.length === 0}
+              >
+                {t('clear') || 'Clear'}
+              </button>
+            </div>
           </div>
+
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={() => setAssignModalOpen(false)} className="btn-secondary flex-1">{t('cancel')}</button>
             <button type="submit" disabled={assigning} className="btn-primary flex-1">

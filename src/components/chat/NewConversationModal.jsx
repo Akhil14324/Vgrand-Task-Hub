@@ -104,17 +104,19 @@ export default function NewConversationModal({ open, onClose, onCreate }) {
             <User size={16} />
             {t('direct')}
           </button>
-          <button
-            onClick={() => { setChatType('group'); setSelected([]); }}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-colors ${
-              chatType === 'group'
-                ? 'bg-brand-600 text-white'
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
-            }`}
-          >
-            <Users size={16} />
-            {t('group')}
-          </button>
+          {isAdmin && (
+            <button
+              onClick={() => { setChatType('group'); setSelected([]); }}
+              className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-colors ${
+                chatType === 'group'
+                  ? 'bg-brand-600 text-white'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+              }`}
+            >
+              <Users size={16} />
+              {t('group')}
+            </button>
+          )}
         </div>
 
         {chatType === 'group' && (

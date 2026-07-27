@@ -70,13 +70,14 @@ export function ChatProvider({ children }) {
       setConnected(false);
     });
 
-    // Fallback: fetch conversations via REST if socket doesn't connect within 3s
+    // Fallback: fetch conversations via REST if socket doesn't connect within 15s
+    // (Render free-tier cold starts can take 30-60s; socket.io retries internally)
     const fallbackTimer = setTimeout(() => {
       if (!socket.connected) {
-        console.warn('[chat] Socket not connected after 3s, fetching conversations via REST');
+        console.warn('[chat] Socket not connected after 15s, fetching conversations via REST');
         fetchConversations();
       }
-    }, 3000);
+    }, 15000);
 
     socket.on('message:new', (msg) => {
       const normalized = {

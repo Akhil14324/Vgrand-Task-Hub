@@ -3,7 +3,7 @@ import { useLang } from '../context/LanguageContext';
 import api from '../api/client';
 import Modal from '../components/Modal';
 import ConfirmDialog from '../components/ConfirmDialog';
-import { Plus, Pencil, Trash2, Building2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Building2, Sparkles } from 'lucide-react';
 
 const DEFAULT_TYPES = [
   { value: 'restaurant', labelKey: 'restaurant' },
@@ -29,7 +29,8 @@ export default function AdminBusinesses() {
     setLoading(true);
     try {
       const res = await api.get('/businesses');
-      setBusinesses(res.data.businesses);
+      const sorted = [...res.data.businesses].sort((a, b) => a.name.localeCompare(b.name));
+      setBusinesses(sorted);
     } catch (err) {
       setError(err.response?.data?.error || t('failedLoadBusinesses'));
     } finally {
@@ -228,7 +229,7 @@ export default function AdminBusinesses() {
               <thead className="bg-gray-50 border-b border-gray-200 dark:bg-gray-700 dark:border-gray-600">
                 <tr>
                   <th className="text-left px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300">{t('business')}</th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300">{t('type')}</th>
+                  <th className="text-center px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300">{t('type')}</th>
                   <th className="text-center px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300">{t('tasks')}</th>
                   <th className="text-center px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300">{t('completed')}</th>
                   <th className="text-center px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300">{t('pending')}</th>
@@ -243,7 +244,7 @@ export default function AdminBusinesses() {
                     <td className="px-4 py-3">
                       <div className="font-medium text-gray-900 dark:text-gray-100">{getDynamic(biz.name)}</div>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="text-center px-4 py-3">
                       <span className="badge bg-brand-100 text-brand-700">{getTypeLabel(biz.type)}</span>
                     </td>
                     <td className="text-center px-4 py-3 font-medium">{biz.task_count}</td>
@@ -288,17 +289,35 @@ export default function AdminBusinesses() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('type')}</label>
-            <select
-              value={form.type}
-              onChange={(e) => setForm({ ...form, type: e.target.value })}
-              className="input"
-            >
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('type')}</label>
+            <div className="flex flex-wrap gap-2">
               {typeOptions.map((topt) => (
-                <option key={topt} value={topt}>{getTypeLabel(topt)}</option>
+                <button
+                  key={topt}
+                  type="button"
+                  onClick={() => setForm({ ...form, type: topt })}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                    form.type === topt
+                      ? 'bg-brand-600 text-white shadow-sm'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  {getTypeLabel(topt)}
+                </button>
               ))}
-              <option value="__custom__">+ {t('addNewType')}</option>
-            </select>
+              <button
+                type="button"
+                onClick={() => setForm({ ...form, type: '__custom__' })}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all border-2 border-dashed ${
+                  form.type === '__custom__'
+                    ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300'
+                    : 'border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-brand-400 hover:text-brand-600'
+                }`}
+              >
+                <Sparkles size={14} />
+                {t('addNewType')}
+              </button>
+            </div>
           </div>
           {form.type === '__custom__' && (
             <div>

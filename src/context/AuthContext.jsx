@@ -24,13 +24,14 @@ export function AuthProvider({ children }) {
       return;
     }
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
     try {
       const res = await api.get('/auth/me', { signal: controller.signal });
       setUser(res.data.user);
     } catch (err) {
       if (err.code === 'ERR_CANCELED' || err.name === 'CanceledError' || err.name === 'AbortError') {
-        console.warn('[auth] session validation timed out');
+        console.warn('[auth] session validation timed out, will retry once');
+        setTimeout(() => fetchMe(), 5000);
       } else if (err.response?.status === 401) {
         sessionStorage.removeItem('token');
         sessionStorage.removeItem('user');

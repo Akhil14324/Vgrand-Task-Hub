@@ -75,9 +75,9 @@ export default function Layout({ children }) {
         { to: '/admin', label: t('dashboard'), icon: Home },
         { to: '/admin/businesses', label: t('businesses'), icon: Building2 },
         { to: '/admin/tasks', label: t('tasks'), icon: CheckSquare },
+        { to: '/chat', label: t('chat'), icon: MessageCircle },
         { to: '/admin/users', label: t('users'), icon: Users },
         { to: '/notifications', label: t('notifications'), icon: Bell },
-        { to: '/chat', label: t('chat'), icon: MessageCircle },
         ...(user?.role === 'super_admin'
           ? [{ to: '/admin/super-users', label: t('userPasswords'), icon: Lock }]
           : []),
@@ -86,14 +86,13 @@ export default function Layout({ children }) {
     : [
         { to: '/dashboard', label: t('home'), icon: Home },
         { to: '/tasks', label: t('tasks'), icon: CheckSquare },
-        { to: '/notifications', label: t('notifications'), icon: Bell },
         { to: '/chat', label: t('chat'), icon: MessageCircle },
+        { to: '/notifications', label: t('notifications'), icon: Bell },
         { to: '/profile', label: t('profile'), icon: User },
       ];
 
   const adminMoreItems = [
     { to: '/notifications', label: t('alerts'), icon: Bell },
-    { to: '/chat', label: t('chat'), icon: MessageCircle },
     { to: '/profile', label: t('profile'), icon: User },
     ...(user?.role === 'super_admin'
       ? [{ to: '/admin/super-users', label: t('userPasswords'), icon: Lock }]
@@ -105,12 +104,14 @@ export default function Layout({ children }) {
         { to: '/admin', label: t('home'), icon: Home },
         { to: '/admin/tasks', label: t('tasks'), icon: CheckSquare },
         { to: '/admin/businesses', label: t('businesses'), icon: Building2 },
+        { to: '/chat', label: t('chat'), icon: MessageCircle },
         { to: '/admin/users', label: t('users'), icon: Users },
       ]
     : [
         { to: '/dashboard', label: t('home'), icon: Home },
         { to: '/tasks', label: t('tasks'), icon: CheckSquare },
         { to: '/chat', label: t('chat'), icon: MessageCircle },
+        { to: '/notifications', label: t('notifications'), icon: Bell },
         { to: '/profile', label: t('profile'), icon: User },
       ];
 

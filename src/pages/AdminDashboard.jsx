@@ -33,7 +33,7 @@ export default function AdminDashboard() {
           api.get('/businesses'),
           api.get('/users/unassigned'),
         ]);
-        setBusinesses(bizRes.data.businesses);
+        setBusinesses([...bizRes.data.businesses].sort((a, b) => a.name.localeCompare(b.name)));
         setUnassignedCount(usersRes.data.users.length);
       } catch (err) {
         setError(err.response?.data?.error || t('failedLoadDashboard'));
